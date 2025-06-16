@@ -9,10 +9,8 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Slider } from "@/components/ui/slider"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Switch } from "@/components/ui/switch"
 import {
   Upload,
   Download,
@@ -24,19 +22,16 @@ import {
   Settings,
   ImageIcon,
   Film,
-  Clock,
   Sparkles,
   Eye,
 } from "lucide-react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
-import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg"
+import { FFmpeg } from "@ffmpeg/ffmpeg"
+import { fetchFile, toBlobURL } from "@ffmpeg/util"
 
 // Initialize FFmpeg
-const ffmpeg = createFFmpeg({
-  log: false,
-  corePath: "https://unpkg.com/@ffmpeg/core@0.10.0/dist/ffmpeg-core.js",
-})
+const ffmpeg = new FFmpeg()
 
 interface GIFProject {
   id: string
@@ -91,24 +86,22 @@ export function GIFMaker() {
   // Load FFmpeg on component mount
   useEffect(() => {
     const loadFFmpeg = async () => {
-      if (!ffmpeg.isLoaded()) {
-        try {
-          await ffmpeg.load()
-          setFfmpegLoaded(true)
-          console.log("FFmpeg loaded successfully")
-        } catch (error) {
-          console.error("Failed to load FFmpeg:", error)
-        }
-      } else {
+      try {
+        const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.2/dist/umd'
+        await ffmpeg.load({
+          coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+          wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+        })
         setFfmpegLoaded(true)
+        console.log('FFmpeg loaded successfully')
+      } catch (error) {
+        console.error('Failed to load FFmpeg:', error)
+        // Fallback to canvas-based GIF creation
+        setFfmpegLoaded(false)
       }
     }
-
+    
     loadFFmpeg()
-
-    return () => {
-      // Clean up any resources if needed
-    }
   }, [])
 
   const handleFiles = useCallback(
@@ -124,19 +117,19 @@ export function GIFMaker() {
 
         for (const file of validFiles) {
           // Create video element to get duration
-          const video = document.createElement("video")
-          video.preload = "metadata"
-
+          const video = document.createElement('video');
+          video.preload = 'metadata';
+          
           // Create a promise to get video metadata
           const videoDuration = await new Promise<number>((resolve) => {
             video.onloadedmetadata = () => {
-              resolve(video.duration)
-            }
-            video.src = URL.createObjectURL(file)
-          })
-
-          URL.revokeObjectURL(video.src)
-
+              resolve(video.duration);
+            };
+            video.src = URL.createObjectURL(file);
+          });
+          
+          URL.revokeObjectURL(video.src);
+          
           const project: GIFProject = {
             id: Math.random().toString(36).substr(2, 9),
             type: "video",
@@ -158,7 +151,7 @@ export function GIFMaker() {
               text: "",
               textColor: "#ffffff",
               textSize: 24,
-              textPosition: "bottom",
+              textPosition: "bottom"
             },
           }
           setProjects((prev) => [...prev, project])
@@ -167,8 +160,8 @@ export function GIFMaker() {
         const validFiles = fileArray.filter((file) => file.type.startsWith("image/"))
 
         if (validFiles.length < 2) {
-          alert("Please select at least 2 images to create a GIF")
-          return
+          alert("Please select at least 2 images to create a GIF");
+          return;
         }
 
         const project: GIFProject = {
@@ -191,7 +184,7 @@ export function GIFMaker() {
             text: "",
             textColor: "#ffffff",
             textSize: 24,
-            textPosition: "bottom",
+            textPosition: "bottom"
           },
         }
         setProjects((prev) => [...prev, project])
@@ -225,404 +218,407 @@ export function GIFMaker() {
     setProjects((prev) =>
       prev.map((project) => {
         if (project.id === projectId) {
-          const updatedSettings = { ...project.settings, ...settings }
-
+          const updatedSettings = { ...project.settings, ...settings };
+          
           // Update duration when start or end time changes
           if (settings.startTime !== undefined || settings.endTime !== undefined) {
-            const start = settings.startTime !== undefined ? settings.startTime : project.settings.startTime
-            const end = settings.endTime !== undefined ? settings.endTime : project.settings.endTime
-            updatedSettings.duration = end - start
+            const start = settings.startTime !== undefined ? settings.startTime : project.settings.startTime;
+            const end = settings.endTime !== undefined ? settings.endTime : project.settings.endTime;
+            updatedSettings.duration = end - start;
           }
-
-          return { ...project, settings: updatedSettings }
+          
+          return { ...project, settings: updatedSettings };
         }
-        return project
-      }),
-    )
+        return project;
+      })
+    );
   }
 
   const applyFilter = (canvas: HTMLCanvasElement, filter: string) => {
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
-
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-    const data = imageData.data
-
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    
     switch (filter) {
-      case "sepia":
+      case 'sepia':
         for (let i = 0; i < data.length; i += 4) {
-          const r = data[i]
-          const g = data[i + 1]
-          const b = data[i + 2]
-
-          data[i] = Math.min(255, r * 0.393 + g * 0.769 + b * 0.189)
-          data[i + 1] = Math.min(255, r * 0.349 + g * 0.686 + b * 0.168)
-          data[i + 2] = Math.min(255, r * 0.272 + g * 0.534 + b * 0.131)
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          
+          data[i] = Math.min(255, (r * 0.393) + (g * 0.769) + (b * 0.189));
+          data[i + 1] = Math.min(255, (r * 0.349) + (g * 0.686) + (b * 0.168));
+          data[i + 2] = Math.min(255, (r * 0.272) + (g * 0.534) + (b * 0.131));
         }
-        break
-
-      case "grayscale":
+        break;
+        
+      case 'grayscale':
         for (let i = 0; i < data.length; i += 4) {
-          const avg = (data[i] + data[i + 1] + data[i + 2]) / 3
-          data[i] = avg
-          data[i + 1] = avg
-          data[i + 2] = avg
+          const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+          data[i] = avg;
+          data[i + 1] = avg;
+          data[i + 2] = avg;
         }
-        break
-
-      case "vintage":
+        break;
+        
+      case 'vintage':
         for (let i = 0; i < data.length; i += 4) {
-          const r = data[i]
-          const g = data[i + 1]
-          const b = data[i + 2]
-
-          data[i] = Math.min(255, r * 0.9 + 20)
-          data[i + 1] = Math.min(255, g * 0.8 + 20)
-          data[i + 2] = Math.min(255, b * 0.7 + 40)
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          
+          data[i] = Math.min(255, (r * 0.9) + 20);
+          data[i + 1] = Math.min(255, (g * 0.8) + 20);
+          data[i + 2] = Math.min(255, (b * 0.7) + 40);
         }
-        break
-
-      case "vignette":
-        const centerX = canvas.width / 2
-        const centerY = canvas.height / 2
-        const maxDistance = Math.sqrt(centerX * centerX + centerY * centerY)
-
+        break;
+        
+      case 'vignette':
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const maxDistance = Math.sqrt(centerX * centerX + centerY * centerY);
+        
         for (let y = 0; y < canvas.height; y++) {
           for (let x = 0; x < canvas.width; x++) {
-            const index = (y * canvas.width + x) * 4
-            const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2))
-            const vignette = 1 - Math.pow(distance / maxDistance, 2) * 0.8
-
-            data[index] *= vignette
-            data[index + 1] *= vignette
-            data[index + 2] *= vignette
+            const index = (y * canvas.width + x) * 4;
+            const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
+            const vignette = 1 - Math.pow(distance / maxDistance, 2) * 0.8;
+            
+            data[index] *= vignette;
+            data[index + 1] *= vignette;
+            data[index + 2] *= vignette;
           }
         }
-        break
-
-      case "vibrant":
+        break;
+        
+      case 'vibrant':
         for (let i = 0; i < data.length; i += 4) {
-          data[i] = Math.min(255, data[i] * 1.2)
-          data[i + 1] = Math.min(255, data[i + 1] * 1.2)
-          data[i + 2] = Math.min(255, data[i + 2] * 1.2)
+          data[i] = Math.min(255, data[i] * 1.2);
+          data[i + 1] = Math.min(255, data[i + 1] * 1.2);
+          data[i + 2] = Math.min(255, data[i + 2] * 1.2);
         }
-        break
-
-      case "cool":
+        break;
+        
+      case 'cool':
         for (let i = 0; i < data.length; i += 4) {
-          data[i + 2] = Math.min(255, data[i + 2] * 1.2) // Boost blue
+          data[i + 2] = Math.min(255, data[i + 2] * 1.2); // Boost blue
         }
-        break
-
-      case "warm":
+        break;
+        
+      case 'warm':
         for (let i = 0; i < data.length; i += 4) {
-          data[i] = Math.min(255, data[i] * 1.2) // Boost red
-          data[i + 1] = Math.min(255, data[i + 1] * 1.05) // Slightly boost green
+          data[i] = Math.min(255, data[i] * 1.2); // Boost red
+          data[i + 1] = Math.min(255, data[i + 1] * 1.05); // Slightly boost green
         }
-        break
+        break;
     }
-
-    ctx.putImageData(imageData, 0, 0)
+    
+    ctx.putImageData(imageData, 0, 0);
   }
 
   const addTextToCanvas = (canvas: HTMLCanvasElement, text: string, color: string, size: number, position: string) => {
-    if (!text) return
-
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
-
-    ctx.font = `bold ${size}px Arial`
-    ctx.fillStyle = color
-    ctx.textAlign = "center"
-
-    let y
+    if (!text) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    ctx.font = `bold ${size}px Arial`;
+    ctx.fillStyle = color;
+    ctx.textAlign = 'center';
+    
+    let y;
     switch (position) {
-      case "top":
-        y = size + 10
-        break
-      case "middle":
-        y = canvas.height / 2
-        break
-      case "bottom":
+      case 'top':
+        y = size + 10;
+        break;
+      case 'middle':
+        y = canvas.height / 2;
+        break;
+      case 'bottom':
       default:
-        y = canvas.height - 20
+        y = canvas.height - 20;
     }
-
+    
     // Add text shadow for better visibility
-    ctx.shadowColor = "rgba(0,0,0,0.7)"
-    ctx.shadowBlur = 6
-    ctx.shadowOffsetX = 2
-    ctx.shadowOffsetY = 2
-
-    ctx.fillText(text, canvas.width / 2, y)
-
+    ctx.shadowColor = 'rgba(0,0,0,0.7)';
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+    
+    ctx.fillText(text, canvas.width / 2, y);
+    
     // Reset shadow
-    ctx.shadowColor = "transparent"
+    ctx.shadowColor = 'transparent';
   }
 
   const createGIF = async (project: GIFProject) => {
     if (!ffmpegLoaded) {
-      alert("FFmpeg is still loading. Please wait a moment and try again.")
-      return
+      alert("FFmpeg is still loading. Please wait a moment and try again.");
+      return;
     }
-
-    setIsProcessing(true)
-    setProgress(0)
-
+    
+    setIsProcessing(true);
+    setProgress(0);
+    
     try {
       if (project.type === "video") {
-        await processVideoToGif(project)
+        await processVideoToGif(project);
       } else {
-        await processImagesToGif(project)
+        await processImagesToGif(project);
       }
     } catch (error) {
-      console.error("Error creating GIF:", error)
-      alert("There was an error creating your GIF. Please try again.")
+      console.error("Error creating GIF:", error);
+      alert("There was an error creating your GIF. Please try again.");
     } finally {
-      setIsProcessing(false)
-      setProgress(100)
+      setIsProcessing(false);
+      setProgress(100);
     }
   }
 
-  const processVideoToGif = async (project: GIFProject) => {
-    const { files, settings } = project
-    const videoFile = files[0]
-
-    // Write the video file to FFmpeg's file system
-    ffmpeg.FS("writeFile", "input.mp4", await fetchFile(videoFile))
-
-    // Prepare FFmpeg command
-    let command = [
-      "-i",
-      "input.mp4",
-      "-ss",
-      settings.startTime.toString(),
-      "-t",
-      settings.duration.toString(),
-      "-vf",
-      `fps=${settings.fps},scale=${settings.width}:${settings.height}:flags=lanczos`,
+const processVideoToGif = async (project: GIFProject) => {
+  const { files, settings } = project
+  const videoFile = files[0]
+  
+  // Write the video file to FFmpeg's file system
+  await ffmpeg.writeFile('input.mp4', await fetchFile(videoFile))
+  
+  // Prepare FFmpeg command
+  let command = [
+    '-i', 'input.mp4',
+    '-ss', settings.startTime.toString(),
+    '-t', settings.duration.toString(),
+    '-vf', `fps=${settings.fps},scale=${settings.width}:${settings.height}:flags=lanczos`
+  ]
+  
+  // Apply speed adjustment
+  if (settings.speed !== 1) {
+    const speedFilter = settings.speed > 1 ? `setpts=PTS/${settings.speed}` : `setpts=PTS*${1/settings.speed}`
+    command = [
+      ...command.slice(0, -1),
+      `${command[command.length-1]},${speedFilter}`,
     ]
-
-    // Apply speed adjustment
-    if (settings.speed !== 1) {
-      const speedFilter = settings.speed > 1 ? `setpts=PTS/${settings.speed}` : `setpts=PTS*${1 / settings.speed}`
-      command = [...command.slice(0, -1), `${command[command.length - 1]},${speedFilter}`]
-    }
-
-    // Apply reverse if needed
-    if (settings.reverse) {
-      command = [...command.slice(0, -1), `${command[command.length - 1]},reverse`]
-    }
-
-    // Apply boomerang if needed
-    if (settings.boomerang) {
-      command = [
-        ...command.slice(0, -1),
-        `${command[command.length - 1]},split[original][reversed];[reversed]reverse[reversed];[original][reversed]concat`,
-      ]
-    }
-
-    // Complete the command
-    command = [...command, "-loop", settings.loop ? "0" : "-1", "-gifflags", "-offsetting", "-y", "output.gif"]
-
-    // Run FFmpeg
-    setProgress(10)
-    await ffmpeg.run(...command)
-    setProgress(80)
-
-    // Read the resulting file
-    const data = ffmpeg.FS("readFile", "output.gif")
-    const gifBlob = new Blob([data.buffer], { type: "image/gif" })
-    const gifUrl = URL.createObjectURL(gifBlob)
-
-    // Update the project with the created GIF
-    setProjects((prev) => prev.map((p) => (p.id === project.id ? { ...p, gifBlob, previewUrl: gifUrl } : p)))
-
-    setPreviewGif(gifUrl)
-    setProgress(100)
   }
-
-  const processImagesToGif = async (project: GIFProject) => {
-    const { files, settings } = project
-
-    // Create a canvas for processing images
-    const canvas = document.createElement("canvas")
-    canvas.width = settings.width
-    canvas.height = settings.height
-    const ctx = canvas.getContext("2d")!
-
-    // Process each image
-    let fileIndex = 0
-    for (const file of files) {
-      // Update progress
-      setProgress(Math.round((fileIndex / files.length) * 50))
-      fileIndex++
-
-      // Load image
-      const img = await createImageBitmap(file)
-
-      // Draw image to canvas with proper scaling
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-
-      // Apply filter if selected
-      if (settings.filter !== "none") {
-        applyFilter(canvas, settings.filter)
-      }
-
-      // Add text if provided
-      if (settings.text) {
-        addTextToCanvas(canvas, settings.text, settings.textColor, settings.textSize, settings.textPosition)
-      }
-
-      // Convert canvas to blob
-      const blob = await new Promise<Blob>((resolve) => {
-        canvas.toBlob((blob) => resolve(blob!), "image/png")
-      })
-
-      // Write to FFmpeg filesystem
-      ffmpeg.FS("writeFile", `img${fileIndex.toString().padStart(3, "0")}.png`, await fetchFile(blob))
-    }
-
-    // Prepare image sequence
-    let imageSequence = Array.from({ length: files.length }, (_, i) => `img${(i + 1).toString().padStart(3, "0")}.png`)
-
-    // Apply reverse if needed
-    if (settings.reverse) {
-      imageSequence = imageSequence.reverse()
-    }
-
-    // Apply boomerang if needed
-    if (settings.boomerang) {
-      const reversedSequence = [...imageSequence].reverse()
-      imageSequence = [...imageSequence, ...reversedSequence.slice(1)] // Avoid duplicating the last frame
-    }
-
-    // Create a file with the image sequence
-    const fileList = imageSequence.map((file) => `file '${file}'`).join("\n")
-    ffmpeg.FS("writeFile", "files.txt", new TextEncoder().encode(fileList))
-
-    // Calculate delay based on FPS
-    const delay = Math.round(100 / settings.fps) // in centiseconds
-
-    // Run FFmpeg to create GIF
-    setProgress(60)
-    await ffmpeg.run(
-      "-f",
-      "concat",
-      "-safe",
-      "0",
-      "-i",
-      "files.txt",
-      "-framerate",
-      settings.fps.toString(),
-      "-loop",
-      settings.loop ? "0" : "-1",
-      "-delay",
-      delay.toString(),
-      "-y",
-      "output.gif",
+  
+  // Apply reverse if needed
+  if (settings.reverse) {
+    command = [
+      ...command.slice(0, -1),
+      `${command[command.length-1]},reverse`,
+    ]
+  }
+  
+  // Apply boomerang if needed
+  if (settings.boomerang) {
+    command = [
+      ...command.slice(0, -1),
+      `${command[command.length-1]},split[original][reversed];[reversed]reverse[reversed];[original][reversed]concat`,
+    ]
+  }
+  
+  // Complete the command
+  command = [
+    ...command,
+    '-loop', settings.loop ? '0' : '-1',
+    '-gifflags', '-offsetting',
+    '-y', 'output.gif'
+  ]
+  
+  // Run FFmpeg
+  setProgress(10)
+  await ffmpeg.exec(command)
+  setProgress(80)
+  
+  // Read the resulting file
+  const data = await ffmpeg.readFile('output.gif')
+  const gifBlob = new Blob([data], { type: 'image/gif' })
+  const gifUrl = URL.createObjectURL(gifBlob)
+  
+  // Update the project with the created GIF
+  setProjects(prev => 
+    prev.map(p => 
+      p.id === project.id 
+        ? { ...p, gifBlob, previewUrl: gifUrl } 
+        : p
     )
+  )
+  
+  setPreviewGif(gifUrl)
+  setProgress(100)
+}
 
-    setProgress(90)
-
-    // Read the resulting file
-    const data = ffmpeg.FS("readFile", "output.gif")
-    const gifBlob = new Blob([data.buffer], { type: "image/gif" })
-    const gifUrl = URL.createObjectURL(gifBlob)
-
-    // Update the project with the created GIF
-    setProjects((prev) => prev.map((p) => (p.id === project.id ? { ...p, gifBlob, previewUrl: gifUrl } : p)))
-
-    setPreviewGif(gifUrl)
-    setProgress(100)
+const processImagesToGif = async (project: GIFProject) => {
+  const { files, settings } = project
+  
+  // Create a canvas for processing images
+  const canvas = document.createElement('canvas')
+  canvas.width = settings.width
+  canvas.height = settings.height
+  const ctx = canvas.getContext('2d')!
+  
+  // Process each image
+  let fileIndex = 0
+  for (const file of files) {
+    // Update progress
+    setProgress(Math.round((fileIndex / files.length) * 50))
+    fileIndex++
+    
+    // Load image
+    const img = await createImageBitmap(file)
+    
+    // Draw image to canvas with proper scaling
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+    
+    // Apply filter if selected
+    if (settings.filter !== 'none') {
+      applyFilter(canvas, settings.filter)
+    }
+    
+    // Add text if provided
+    if (settings.text) {
+      addTextToCanvas(canvas, settings.text, settings.textColor, settings.textSize, settings.textPosition)
+    }
+    
+    // Convert canvas to blob
+    const blob = await new Promise<Blob>((resolve) => {
+      canvas.toBlob(blob => resolve(blob!), 'image/png')
+    })
+    
+    // Write to FFmpeg filesystem
+    await ffmpeg.writeFile(`img${fileIndex.toString().padStart(3, '0')}.png`, await fetchFile(blob))
   }
+  
+  // Prepare image sequence
+  let imageSequence = Array.from({ length: files.length }, (_, i) => 
+    `img${(i + 1).toString().padStart(3, '0')}.png`
+  )
+  
+  // Apply reverse if needed
+  if (settings.reverse) {
+    imageSequence = imageSequence.reverse()
+  }
+  
+  // Apply boomerang if needed
+  if (settings.boomerang) {
+    const reversedSequence = [...imageSequence].reverse()
+    imageSequence = [...imageSequence, ...reversedSequence.slice(1)] // Avoid duplicating the last frame
+  }
+  
+  // Create a file with the image sequence
+  const fileList = imageSequence.map(file => `file '${file}'`).join('\n')
+  await ffmpeg.writeFile('files.txt', new TextEncoder().encode(fileList))
+  
+  // Calculate delay based on FPS
+  const delay = Math.round(100 / settings.fps) // in centiseconds
+  
+  // Run FFmpeg to create GIF
+  setProgress(60)
+  await ffmpeg.exec([
+    '-f', 'concat',
+    '-safe', '0',
+    '-i', 'files.txt',
+    '-framerate', settings.fps.toString(),
+    '-loop', settings.loop ? '0' : '-1',
+    '-delay', delay.toString(),
+    '-y', 'output.gif'
+  ])
+  
+  setProgress(90)
+  
+  // Read the resulting file
+  const data = await ffmpeg.readFile('output.gif')
+  const gifBlob = new Blob([data], { type: 'image/gif' })
+  const gifUrl = URL.createObjectURL(gifBlob)
+  
+  // Update the project with the created GIF
+  setProjects(prev => 
+    prev.map(p => 
+      p.id === project.id 
+        ? { ...p, gifBlob, previewUrl: gifUrl } 
+        : p
+    )
+  \
+  setPreviewGif(gifUrl)
+  setProgress(100)
+}
 
   const generatePreview = async (project: GIFProject) => {
-    if (!project || !canvasRef.current) return
-
-    setIsProcessing(true)
-    setProgress(0)
-
+    if (!project || !canvasRef.current) return;
+    
+    setIsProcessing(true);
+    setProgress(0);
+    
     try {
       // Create a quick preview (simplified version of the full GIF creation)
       if (project.type === "video") {
-        const video = videoPreviewRef.current
-        if (!video) return
-
-        const canvas = canvasRef.current
-        const ctx = canvas.getContext("2d")!
-
-        canvas.width = project.settings.width
-        canvas.height = project.settings.height
-
+        const video = videoPreviewRef.current;
+        if (!video) return;
+        
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d')!;
+        
+        canvas.width = project.settings.width;
+        canvas.height = project.settings.height;
+        
         // Set video to start time
-        video.currentTime = project.settings.startTime
-
+        video.currentTime = project.settings.startTime;
+        
         // Wait for video to seek
         await new Promise<void>((resolve) => {
-          video.onseeked = () => resolve()
-        })
-
+          video.onseeked = () => resolve();
+        });
+        
         // Capture frame
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
         // Apply filter if selected
-        if (project.settings.filter !== "none") {
-          applyFilter(canvas, project.settings.filter)
+        if (project.settings.filter !== 'none') {
+          applyFilter(canvas, project.settings.filter);
         }
-
+        
         // Add text if provided
         if (project.settings.text) {
-          addTextToCanvas(
-            canvas,
-            project.settings.text,
-            project.settings.textColor,
-            project.settings.textSize,
-            project.settings.textPosition,
-          )
+          addTextToCanvas(canvas, project.settings.text, project.settings.textColor, 
+                          project.settings.textSize, project.settings.textPosition);
         }
-
+        
         // Convert to data URL for preview
-        const previewUrl = canvas.toDataURL("image/png")
-        setPreviewGif(previewUrl)
+        const previewUrl = canvas.toDataURL('image/png');
+        setPreviewGif(previewUrl);
       } else {
         // For images, just show the first image
         if (project.files.length > 0) {
-          const canvas = canvasRef.current
-          const ctx = canvas.getContext("2d")!
-
-          canvas.width = project.settings.width
-          canvas.height = project.settings.height
-
-          const img = await createImageBitmap(project.files[0])
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-
+          const canvas = canvasRef.current;
+          const ctx = canvas.getContext('2d')!;
+          
+          canvas.width = project.settings.width;
+          canvas.height = project.settings.height;
+          
+          const img = await createImageBitmap(project.files[0]);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          
           // Apply filter if selected
-          if (project.settings.filter !== "none") {
-            applyFilter(canvas, project.settings.filter)
+          if (project.settings.filter !== 'none') {
+            applyFilter(canvas, project.settings.filter);
           }
-
+          
           // Add text if provided
           if (project.settings.text) {
-            addTextToCanvas(
-              canvas,
-              project.settings.text,
-              project.settings.textColor,
-              project.settings.textSize,
-              project.settings.textPosition,
-            )
+            addTextToCanvas(canvas, project.settings.text, project.settings.textColor, 
+                            project.settings.textSize, project.settings.textPosition);
           }
-
-          const previewUrl = canvas.toDataURL("image/png")
-          setPreviewGif(previewUrl)
+          
+          const previewUrl = canvas.toDataURL('image/png');
+          setPreviewGif(previewUrl);
         }
       }
     } catch (error) {
-      console.error("Error generating preview:", error)
+      console.error("Error generating preview:", error);
     } finally {
-      setIsProcessing(false)
-      setProgress(0)
+      setIsProcessing(false);
+      setProgress(0);
     }
   }
 
@@ -650,16 +646,16 @@ export function GIFMaker() {
   }
 
   const togglePlayPreview = () => {
-    const video = videoPreviewRef.current
-    if (!video) return
-
+    const video = videoPreviewRef.current;
+    if (!video) return;
+    
     if (isPlaying) {
-      video.pause()
+      video.pause();
     } else {
-      video.play()
+      video.play();
     }
-
-    setIsPlaying(!isPlaying)
+    
+    setIsPlaying(!isPlaying);
   }
 
   return (
@@ -674,8 +670,7 @@ export function GIFMaker() {
             Premium GIF Maker
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 leading-relaxed">
-            Create stunning animated GIFs from videos or images with professional effects, filters, and customization
-            options.
+            Create stunning animated GIFs from videos or images with professional effects, filters, and customization options.
           </p>
         </motion.div>
 
@@ -702,7 +697,7 @@ export function GIFMaker() {
                       Images to GIF
                     </TabsTrigger>
                   </TabsList>
-
+                  
                   <TabsContent value="video">
                     <div className="p-4 bg-pink-50 dark:bg-pink-900/20 rounded-lg mb-4">
                       <h3 className="font-semibold flex items-center gap-2 mb-2">
@@ -710,32 +705,22 @@ export function GIFMaker() {
                         Video to GIF Converter
                       </h3>
                       <p className="text-sm text-gray-600 dark:text-gray-300">
-                        Upload a video file to convert it into a high-quality GIF. Trim, resize, and add effects to
-                        create the perfect animation.
+                        Upload a video file to convert it into a high-quality GIF. Trim, resize, and add effects to create the perfect animation.
                       </p>
                       <div className="flex flex-wrap gap-2 mt-3">
-                        <Badge
-                          variant="secondary"
-                          className="bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-100"
-                        >
+                        <Badge variant="secondary" className="bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-100">
                           MP4, WebM, MOV supported
                         </Badge>
-                        <Badge
-                          variant="secondary"
-                          className="bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-100"
-                        >
+                        <Badge variant="secondary" className="bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-100">
                           Up to 200MB
                         </Badge>
-                        <Badge
-                          variant="secondary"
-                          className="bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-100"
-                        >
+                        <Badge variant="secondary" className="bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-100">
                           Custom trimming
                         </Badge>
                       </div>
                     </div>
                   </TabsContent>
-
+                  
                   <TabsContent value="images">
                     <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg mb-4">
                       <h3 className="font-semibold flex items-center gap-2 mb-2">
@@ -743,26 +728,16 @@ export function GIFMaker() {
                         Images to GIF Creator
                       </h3>
                       <p className="text-sm text-gray-600 dark:text-gray-300">
-                        Select multiple images to combine them into a smooth animated GIF. Control speed, order, and add
-                        special effects.
+                        Select multiple images to combine them into a smooth animated GIF. Control speed, order, and add special effects.
                       </p>
                       <div className="flex flex-wrap gap-2 mt-3">
-                        <Badge
-                          variant="secondary"
-                          className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100"
-                        >
+                        <Badge variant="secondary" className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100">
                           JPG, PNG, WebP supported
                         </Badge>
-                        <Badge
-                          variant="secondary"
-                          className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100"
-                        >
+                        <Badge variant="secondary" className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100">
                           Select multiple images
                         </Badge>
-                        <Badge
-                          variant="secondary"
-                          className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100"
-                        >
+                        <Badge variant="secondary" className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100">
                           Custom frame rate
                         </Badge>
                       </div>
@@ -805,27 +780,15 @@ export function GIFMaker() {
                       <div className="flex flex-wrap justify-center gap-2">
                         {inputType === "video" ? (
                           <>
-                            <Badge variant="outline" className="bg-white/50 dark:bg-slate-800/50">
-                              MP4
-                            </Badge>
-                            <Badge variant="outline" className="bg-white/50 dark:bg-slate-800/50">
-                              WebM
-                            </Badge>
-                            <Badge variant="outline" className="bg-white/50 dark:bg-slate-800/50">
-                              MOV
-                            </Badge>
+                            <Badge variant="outline" className="bg-white/50 dark:bg-slate-800/50">MP4</Badge>
+                            <Badge variant="outline" className="bg-white/50 dark:bg-slate-800/50">WebM</Badge>
+                            <Badge variant="outline" className="bg-white/50 dark:bg-slate-800/50">MOV</Badge>
                           </>
                         ) : (
                           <>
-                            <Badge variant="outline" className="bg-white/50 dark:bg-slate-800/50">
-                              JPG
-                            </Badge>
-                            <Badge variant="outline" className="bg-white/50 dark:bg-slate-800/50">
-                              PNG
-                            </Badge>
-                            <Badge variant="outline" className="bg-white/50 dark:bg-slate-800/50">
-                              Multiple Images
-                            </Badge>
+                            <Badge variant="outline" className="bg-white/50 dark:bg-slate-800/50">JPG</Badge>
+                            <Badge variant="outline" className="bg-white/50 dark:bg-slate-800/50">PNG</Badge>
+                            <Badge variant="outline" className="bg-white/50 dark:bg-slate-800/50">Multiple Images</Badge>
                           </>
                         )}
                         <Badge variant="outline" className="bg-white/50 dark:bg-slate-800/50">
@@ -855,7 +818,7 @@ export function GIFMaker() {
                   </motion.div>
                 )}
               </AnimatePresence>
-
+              
               {/* Hidden canvas for processing */}
               <canvas ref={canvasRef} className="hidden" />
             </CardContent>
@@ -877,7 +840,9 @@ export function GIFMaker() {
                       <CardHeader className="bg-gradient-to-r from-pink-500/10 to-purple-500/10">
                         <CardTitle className="text-xl flex items-center justify-between">
                           <span>
-                            {project.type === "video" ? project.files[0].name : `${project.files.length} Images`}
+                            {project.type === "video" 
+                              ? project.files[0].name 
+                              : `${project.files.length} Images`}
                           </span>
                           <Button
                             onClick={() => removeProject(project.id)}
@@ -897,7 +862,7 @@ export function GIFMaker() {
                               <Film className="w-5 h-5 text-pink-500" />
                               Preview
                             </h3>
-
+                            
                             {project.type === "video" && (
                               <div className="relative rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
                                 <video
@@ -906,22 +871,22 @@ export function GIFMaker() {
                                   className="w-full rounded-lg"
                                   onEnded={() => setIsPlaying(false)}
                                 />
-
+                                
                                 <div className="absolute bottom-4 left-4 right-4 flex items-center gap-4">
-                                  <Button
+                                  <Button 
                                     onClick={togglePlayPreview}
                                     size="sm"
                                     className="bg-black/70 hover:bg-black/90 text-white rounded-full w-10 h-10 p-0 flex items-center justify-center"
                                   >
                                     {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                                   </Button>
-
+                                  
                                   <div className="flex-1">
                                     <Slider
                                       value={[project.settings.startTime]}
                                       onValueChange={([value]) => {
                                         if (videoPreviewRef.current) {
-                                          videoPreviewRef.current.currentTime = value
+                                          videoPreviewRef.current.currentTime = value;
                                         }
                                       }}
                                       max={videoPreviewRef.current?.duration || 100}
@@ -932,7 +897,7 @@ export function GIFMaker() {
                                 </div>
                               </div>
                             )}
-
+                            
                             {project.type === "images" && (
                               <div className="grid grid-cols-3 gap-2">
                                 {project.files.slice(0, 9).map((file, idx) => (
@@ -950,7 +915,7 @@ export function GIFMaker() {
                                 )}
                               </div>
                             )}
-
+                            
                             {/* GIF Preview */}
                             {(project.gifBlob || previewGif) && (
                               <div className="mt-4">
@@ -970,7 +935,7 @@ export function GIFMaker() {
                                 </div>
                               </div>
                             )}
-
+                            
                             <div className="flex flex-wrap gap-3 mt-4">
                               <Button
                                 onClick={() => generatePreview(project)}
@@ -980,7 +945,7 @@ export function GIFMaker() {
                                 <Eye className="w-4 h-4" />
                                 Quick Preview
                               </Button>
-
+                              
                               <Button
                                 onClick={() => createGIF(project)}
                                 className="flex items-center gap-2 bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600"
@@ -1008,14 +973,14 @@ export function GIFMaker() {
                               <Settings className="w-5 h-5 text-purple-500" />
                               GIF Settings
                             </h3>
-
+                            
                             <Tabs defaultValue="basic">
                               <TabsList className="grid w-full grid-cols-3">
                                 <TabsTrigger value="basic">Basic</TabsTrigger>
                                 <TabsTrigger value="advanced">Advanced</TabsTrigger>
                                 <TabsTrigger value="effects">Effects</TabsTrigger>
                               </TabsList>
-
+                              
                               <TabsContent value="basic" className="space-y-4 pt-4">
                                 {project.type === "video" && (
                                   <div className="space-y-4">
@@ -1023,35 +988,28 @@ export function GIFMaker() {
                                       <div className="flex items-center justify-between mb-2">
                                         <Label className="text-sm font-medium">Trim Video</Label>
                                         <span className="text-xs text-gray-500">
-                                          Duration: {(project.settings.endTime - project.settings.startTime).toFixed(1)}
-                                          s
+                                          Duration: {(project.settings.endTime - project.settings.startTime).toFixed(1)}s
                                         </span>
                                       </div>
-
+                                      
                                       <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                          <Label className="text-xs">
-                                            Start: {project.settings.startTime.toFixed(1)}s
-                                          </Label>
+                                          <Label className="text-xs">Start: {project.settings.startTime.toFixed(1)}s</Label>
                                           <Slider
                                             value={[project.settings.startTime]}
-                                            onValueChange={([value]) =>
-                                              updateProjectSettings(project.id, { startTime: value })
-                                            }
+                                            onValueChange={([value]) => updateProjectSettings(project.id, { startTime: value })}
                                             max={project.settings.endTime - 0.5}
                                             min={0}
                                             step={0.1}
                                             className="w-full"
                                           />
                                         </div>
-
+                                        
                                         <div>
                                           <Label className="text-xs">End: {project.settings.endTime.toFixed(1)}s</Label>
                                           <Slider
                                             value={[project.settings.endTime]}
-                                            onValueChange={([value]) =>
-                                              updateProjectSettings(project.id, { endTime: value })
-                                            }
+                                            onValueChange={([value]) => updateProjectSettings(project.id, { endTime: value })}
                                             max={videoPreviewRef.current?.duration || 30}
                                             min={project.settings.startTime + 0.5}
                                             step={0.1}
@@ -1062,7 +1020,7 @@ export function GIFMaker() {
                                     </div>
                                   </div>
                                 )}
-
+                                
                                 <div>
                                   <Label className="block text-sm font-medium mb-2">
                                     Frame Rate: {project.settings.fps} FPS
@@ -1131,220 +1089,3 @@ export function GIFMaker() {
                                       <SelectContent>
                                         <SelectItem value="180">180px</SelectItem>
                                         <SelectItem value="270">270px</SelectItem>
-                                        <SelectItem value="360">360px</SelectItem>
-                                        <SelectItem value="450">450px</SelectItem>
-                                        <SelectItem value="720">720px</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                </div>
-                              </TabsContent>
-
-                              <TabsContent value="advanced" className="space-y-4 pt-4">
-                                <div>
-                                  <Label className="block text-sm font-medium mb-2">
-                                    Speed: {project.settings.speed}x
-                                  </Label>
-                                  <Slider
-                                    value={[project.settings.speed]}
-                                    onValueChange={([value]) => updateProjectSettings(project.id, { speed: value })}
-                                    max={4}
-                                    min={0.25}
-                                    step={0.25}
-                                    className="w-full"
-                                  />
-                                  <div className="flex justify-between text-xs text-gray-500 mt-1">
-                                    <span>0.25x (Slow)</span>
-                                    <span>4x (Fast)</span>
-                                  </div>
-                                </div>
-
-                                <div className="space-y-3">
-                                  <div className="flex items-center justify-between">
-                                    <Label className="text-sm font-medium">Loop GIF</Label>
-                                    <Switch
-                                      checked={project.settings.loop}
-                                      onCheckedChange={(checked) =>
-                                        updateProjectSettings(project.id, { loop: checked })
-                                      }
-                                    />
-                                  </div>
-
-                                  <div className="flex items-center justify-between">
-                                    <Label className="text-sm font-medium">Reverse</Label>
-                                    <Switch
-                                      checked={project.settings.reverse}
-                                      onCheckedChange={(checked) =>
-                                        updateProjectSettings(project.id, { reverse: checked })
-                                      }
-                                    />
-                                  </div>
-
-                                  <div className="flex items-center justify-between">
-                                    <Label className="text-sm font-medium">Boomerang Effect</Label>
-                                    <Switch
-                                      checked={project.settings.boomerang}
-                                      onCheckedChange={(checked) =>
-                                        updateProjectSettings(project.id, { boomerang: checked })
-                                      }
-                                    />
-                                  </div>
-                                </div>
-                              </TabsContent>
-
-                              <TabsContent value="effects" className="space-y-4 pt-4">
-                                <div>
-                                  <Label className="block text-sm font-medium mb-2">Filter</Label>
-                                  <Select
-                                    value={project.settings.filter}
-                                    onValueChange={(value) => updateProjectSettings(project.id, { filter: value })}
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {Object.entries(FILTERS).map(([key, label]) => (
-                                        <SelectItem key={key} value={key}>
-                                          {label}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-
-                                <div className="space-y-3">
-                                  <div>
-                                    <Label className="block text-sm font-medium mb-2">Add Text</Label>
-                                    <Input
-                                      value={project.settings.text}
-                                      onChange={(e) => updateProjectSettings(project.id, { text: e.target.value })}
-                                      placeholder="Enter text to overlay..."
-                                    />
-                                  </div>
-
-                                  {project.settings.text && (
-                                    <>
-                                      <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                          <Label className="block text-sm font-medium mb-2">Text Color</Label>
-                                          <Input
-                                            type="color"
-                                            value={project.settings.textColor}
-                                            onChange={(e) =>
-                                              updateProjectSettings(project.id, { textColor: e.target.value })
-                                            }
-                                            className="h-10"
-                                          />
-                                        </div>
-
-                                        <div>
-                                          <Label className="block text-sm font-medium mb-2">Text Size</Label>
-                                          <Slider
-                                            value={[project.settings.textSize]}
-                                            onValueChange={([value]) =>
-                                              updateProjectSettings(project.id, { textSize: value })
-                                            }
-                                            max={48}
-                                            min={12}
-                                            step={2}
-                                            className="w-full"
-                                          />
-                                        </div>
-                                      </div>
-
-                                      <div>
-                                        <Label className="block text-sm font-medium mb-2">Text Position</Label>
-                                        <Select
-                                          value={project.settings.textPosition}
-                                          onValueChange={(value) =>
-                                            updateProjectSettings(project.id, { textPosition: value })
-                                          }
-                                        >
-                                          <SelectTrigger>
-                                            <SelectValue />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            <SelectItem value="top">Top</SelectItem>
-                                            <SelectItem value="middle">Middle</SelectItem>
-                                            <SelectItem value="bottom">Bottom</SelectItem>
-                                          </SelectContent>
-                                        </Select>
-                                      </div>
-                                    </>
-                                  )}
-                                </div>
-                              </TabsContent>
-                            </Tabs>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Features Section */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-          <Card className="mt-12 shadow-2xl border-0 bg-gradient-to-br from-pink-50 to-purple-50 dark:from-slate-800 dark:to-slate-700">
-            <CardContent className="p-8">
-              <h2 className="text-3xl font-bold text-center mb-8 bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
-                Professional GIF Creation Features
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[
-                  {
-                    icon: <Zap className="w-6 h-6" />,
-                    title: "Lightning Fast",
-                    description: "Create high-quality GIFs in seconds with our optimized processing engine.",
-                  },
-                  {
-                    icon: <Settings className="w-6 h-6" />,
-                    title: "Advanced Controls",
-                    description: "Fine-tune every aspect: speed, quality, size, filters, and effects.",
-                  },
-                  {
-                    icon: <Sparkles className="w-6 h-6" />,
-                    title: "Premium Effects",
-                    description: "Add professional filters, text overlays, and special effects.",
-                  },
-                  {
-                    icon: <Film className="w-6 h-6" />,
-                    title: "Video to GIF",
-                    description: "Convert any video format to GIF with precise trimming controls.",
-                  },
-                  {
-                    icon: <ImageIcon className="w-6 h-6" />,
-                    title: "Image Sequences",
-                    description: "Combine multiple images into smooth animated GIFs.",
-                  },
-                  {
-                    icon: <Clock className="w-6 h-6" />,
-                    title: "Instant Preview",
-                    description: "See your changes in real-time before creating the final GIF.",
-                  },
-                ].map((feature, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 + index * 0.1 }}
-                    className="text-center p-6 bg-white/50 dark:bg-slate-800/50 rounded-xl backdrop-blur-sm"
-                  >
-                    <div className="bg-gradient-to-r from-pink-500 to-purple-500 text-white p-3 rounded-lg w-fit mx-auto mb-4">
-                      {feature.icon}
-                    </div>
-                    <h3 className="font-semibold text-lg mb-2">{feature.title}</h3>
-                    <p className="text-gray-600 dark:text-gray-300 text-sm">{feature.description}</p>
-                  </motion.div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
-    </div>
-  )
-}
