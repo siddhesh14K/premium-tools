@@ -82,10 +82,10 @@ export const metadata: Metadata = {
       "Professional free online tools for image compression, PDF editing, video processing & more. No registration required. Privacy-focused & reliable.",
     images: [
       {
-        url: "/og-image.png",
+        url: "/logo-new.png",
         width: 1200,
         height: 630,
-        alt: "Free Tools Free - Premium Online Tools Dashboard",
+        alt: "Free Tools Free - Premium Online Tools Logo",
         type: "image/png",
       },
     ],
@@ -96,7 +96,7 @@ export const metadata: Metadata = {
     creator: "@freetoolsfree",
     title: "Free Tools Free - Premium Online Tools That Actually Work",
     description: "Professional free online tools. No registration required. Privacy-focused & reliable.",
-    images: ["/twitter-image.png"],
+    images: ["/logo-new.png"],
   },
   verification: {
     google: "aJV1XubkXnC5S3nWnJbbe7NJhdxCcB6VTYu9nsXqls4",
@@ -106,6 +106,23 @@ export const metadata: Metadata = {
   },
   category: "technology",
   classification: "Online Tools and Utilities",
+  icons: {
+    icon: [
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    other: [
+      {
+        rel: "android-chrome-192x192",
+        url: "/android-chrome-192x192.png",
+      },
+      {
+        rel: "android-chrome-512x512",
+        url: "/android-chrome-512x512.png",
+      },
+    ],
+  },
     generator: 'v0.dev'
 }
 
@@ -135,12 +152,24 @@ export default function RootLayout({
 
         <link rel="canonical" href="https://freetoolsfree.in" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+
+        {/* Favicon and Logo Icons - Your Logo Will Appear in Search Results */}
         <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/favicon-16x16.png" sizes="16x16" type="image/png" />
+        <link rel="icon" href="/favicon-32x32.png" sizes="32x32" type="image/png" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="android-chrome-192x192" href="/android-chrome-192x192.png" />
+        <link rel="android-chrome-512x512" href="/android-chrome-512x512.png" />
+
+        {/* PWA Manifest */}
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#3b82f6" />
         <meta name="color-scheme" content="light dark" />
+
+        {/* Logo for Search Engines */}
+        <meta property="og:logo" content="https://freetoolsfree.in/logo-new.png" />
+        <meta name="msapplication-TileImage" content="/logo-new.png" />
+        <meta name="msapplication-TileColor" content="#3b82f6" />
 
         {/* Preconnect to external domains */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
