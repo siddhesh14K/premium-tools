@@ -9,6 +9,7 @@ import { Analytics } from "@/components/analytics"
 import { StructuredData } from "@/components/structured-data"
 import { CookieConsent } from "@/components/cookie-consent"
 import { Suspense } from "react"
+import Script from "next/script"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -24,10 +25,10 @@ const poppins = Poppins({
 })
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://exacttools.com"),
+  metadataBase: new URL("https://freetoolsfree.in"),
   title: {
-    default: "Exact Tools - Free Online Tools for Everyone | Image, PDF, Video & More",
-    template: "%s | Exact Tools - Free Online Utilities",
+    default: "Free Tools Free - Premium Online Tools That Actually Work | Free Multi-Tool Web App",
+    template: "%s | Free Tools Free - Premium Online Tools",
   },
   description:
     "Professional free online tools for image compression, PDF editing, video processing, background removal, calculations & more. No registration required. Privacy-focused, fast & reliable.",
@@ -46,16 +47,16 @@ export const metadata: Metadata = {
     "file converter",
     "image editor",
     "document tools",
-    "exact tools",
+    "free tools free",
     "free software",
     "online converter",
     "web utilities",
     "digital tools",
     "file processing",
   ].join(", "),
-  authors: [{ name: "Exact Tools Team", url: "https://exacttools.com" }],
-  creator: "Exact Tools",
-  publisher: "Exact Tools",
+  authors: [{ name: "Free Tools Free Team", url: "https://freetoolsfree.in" }],
+  creator: "Free Tools Free",
+  publisher: "Free Tools Free",
   formatDetection: {
     email: false,
     address: false,
@@ -75,9 +76,9 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://exacttools.com",
-    siteName: "Exact Tools",
-    title: "Exact Tools - Free Online Tools for Everyone",
+    url: "https://freetoolsfree.in",
+    siteName: "Free Tools Free",
+    title: "Free Tools Free - Premium Online Tools That Actually Work",
     description:
       "Professional free online tools for image compression, PDF editing, video processing & more. No registration required. Privacy-focused & reliable.",
     images: [
@@ -85,16 +86,16 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Exact Tools - Free Online Tools Dashboard",
+        alt: "Free Tools Free - Premium Online Tools Dashboard",
         type: "image/png",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    site: "@exacttools",
-    creator: "@exacttools",
-    title: "Exact Tools - Free Online Tools for Everyone",
+    site: "@freetoolsfree",
+    creator: "@freetoolsfree",
+    title: "Free Tools Free - Premium Online Tools That Actually Work",
     description: "Professional free online tools. No registration required. Privacy-focused & reliable.",
     images: ["/twitter-image.png"],
   },
@@ -102,7 +103,7 @@ export const metadata: Metadata = {
     google: "google-site-verification-code-here",
   },
   alternates: {
-    canonical: "https://exacttools.com",
+    canonical: "https://freetoolsfree.in",
   },
   category: "technology",
   classification: "Online Tools and Utilities",
@@ -117,20 +118,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${poppins.variable}`}>
       <head>
-        {/* Google Analytics - Must be first after <head> */}
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-M1MRK2LLM7"></script>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-M1MRK2LLM7');
-            `,
-          }}
-        />
-
-        <link rel="canonical" href="https://exacttools.com" />
+        <link rel="canonical" href="https://freetoolsfree.in" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -139,28 +127,19 @@ export default function RootLayout({
         <meta name="theme-color" content="#3b82f6" />
         <meta name="color-scheme" content="light dark" />
 
-        {/* AdSense Script */}
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR-PUBLISHER-ID"
-          crossOrigin="anonymous"
-        />
-
         {/* Preconnect to external domains */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://www.google-analytics.com" />
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
 
         {/* DNS Prefetch */}
-        <link rel="dns-prefetch" href="https://www.google-analytics.com" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
 
         {/* Additional SEO Meta Tags */}
-        <meta name="application-name" content="Exact Tools" />
-        <meta name="apple-mobile-web-app-title" content="Exact Tools" />
+        <meta name="application-name" content="Free Tools Free" />
+        <meta name="apple-mobile-web-app-title" content="Free Tools Free" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="mobile-web-app-capable" content="yes" />
@@ -176,6 +155,28 @@ export default function RootLayout({
         <StructuredData />
       </head>
       <body className={`${inter.className} antialiased`}>
+        {/* Google Analytics - Using Next.js Script component for better performance */}
+        <Script src="https://www.googletagmanager.com/gtag/js?id=G-M1MRK2LLM7" strategy="afterInteractive" />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-M1MRK2LLM7', {
+              page_title: document.title,
+              page_location: window.location.href,
+              send_page_view: true
+            });
+          `}
+        </Script>
+
+        {/* AdSense Script */}
+        <Script
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR-PUBLISHER-ID"
+          strategy="afterInteractive"
+          crossOrigin="anonymous"
+        />
+
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <Header />
           <Suspense fallback={<div>Loading...</div>}>

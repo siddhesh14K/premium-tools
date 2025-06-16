@@ -29,7 +29,7 @@ export default function robots(): MetadataRoute.Robots {
         allow: "/",
       },
     ],
-    sitemap: "https://exacttools.com/sitemap.xml",
-    host: "https://exacttools.com",
+    sitemap: "https://freetoolsfree.in/sitemap.xml",
+    host: "https://freetoolsfree.in",
   }
 }
