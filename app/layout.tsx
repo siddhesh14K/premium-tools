@@ -180,7 +180,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${poppins.variable}`}>
       <head>
-        {/* Google Search Console Verification */}
+        {/* Google Search Console Verification - Priority Meta Tag */}
         <meta name="google-site-verification" content="aJV1XubkXnC5S3nWnJbbe7NJhdxCcB6VTYu9nsXqls4" />
 
         {/* Google Analytics */}
