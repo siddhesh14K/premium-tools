@@ -14,12 +14,20 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-gray-100 dark:border-slate-800">
       <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center group">
-          <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }} className="flex items-center">
-            <img
-              src="/logo-new.png"
-              alt="Exact Free Tools"
-              className="h-10 sm:h-12 w-auto object-contain filter dark:brightness-110"
-            />
+          <motion.div
+            whileHover={{ scale: 1.05, rotate: 5 }}
+            transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
+            className="relative"
+          >
+            {/* Circular Background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 rounded-full blur-sm opacity-20 group-hover:opacity-30 transition-opacity duration-300"></div>
+            <div className="relative bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 dark:from-white dark:via-gray-100 dark:to-gray-200 rounded-full p-2 shadow-lg border border-gray-200 dark:border-gray-700">
+              <img
+                src="/logo-new.png"
+                alt="Exact Free Tools"
+                className="h-8 sm:h-10 w-8 sm:w-10 object-contain rounded-full"
+              />
+            </div>
           </motion.div>
         </Link>
 
