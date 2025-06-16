@@ -237,3 +237,80 @@ select {
     background: white !important;
   }
 }
+
+/* Mobile-First Optimizations */
+@media (max-width: 640px) {
+  .container {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  /* Better touch targets */
+  button,
+  a,
+  input,
+  textarea {
+    min-height: 44px;
+  }
+
+  /* Improved text readability */
+  body {
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  /* Better spacing for mobile */
+  .space-y-2 > * + * {
+    margin-top: 0.75rem;
+  }
+
+  .space-y-4 > * + * {
+    margin-top: 1.5rem;
+  }
+}
+
+/* Enhanced mobile interactions */
+@media (hover: none) and (pointer: coarse) {
+  .hover\:scale-105:hover {
+    transform: none;
+  }
+
+  .group:hover .group-hover\:scale-110 {
+    transform: none;
+  }
+}
+
+/* Improved focus states for mobile */
+@media (max-width: 768px) {
+  .focus\:ring-2:focus {
+    ring-width: 3px;
+  }
+}
+
+/* Better loading states */
+.loading {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Smooth scrolling for all devices */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Better image optimization */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}

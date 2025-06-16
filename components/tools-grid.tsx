@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { motion } from "framer-motion"
 import {
@@ -21,140 +21,114 @@ const tools = [
   {
     id: "image-compressor",
     title: "Image Compressor",
-    description:
-      "Reduce image file sizes by up to 90% without losing quality. Supports JPG, PNG, WebP with batch processing.",
+    description: "Reduce image sizes by 90%",
     icon: ImageIcon,
     gradient: "from-blue-500 to-cyan-500",
-    badge: "Most Popular",
-    badgeColor: "bg-blue-500",
+    badge: "Popular",
     href: "/tools/image-compressor",
-    stats: "2M+ images compressed",
-  },
-  {
-    id: "pdf-converter",
-    title: "PDF to Word/Text",
-    description: "Convert PDF files to editable Word documents or plain text with perfect formatting preservation.",
-    icon: FileText,
-    gradient: "from-red-500 to-pink-500",
-    badge: "AI Powered",
-    badgeColor: "bg-red-500",
-    href: "/tools/pdf-converter",
-    stats: "500K+ PDFs converted",
   },
   {
     id: "pdf-editor",
     title: "PDF Editor",
-    description:
-      "Edit, annotate, and modify PDF documents with advanced tools. Add text, images, signatures, and drawings.",
+    description: "Edit PDFs with ease",
     icon: FileEdit,
     gradient: "from-amber-500 to-orange-500",
-    badge: "Professional",
-    badgeColor: "bg-amber-500",
+    badge: "Pro",
     href: "/tools/pdf-editor",
-    stats: "250K+ PDFs edited",
   },
   {
     id: "background-remover",
     title: "Background Remover",
-    description: "Remove backgrounds from images instantly with AI precision. Get transparent PNGs in seconds.",
+    description: "AI-powered background removal",
     icon: Scissors,
     gradient: "from-green-500 to-emerald-500",
-    badge: "AI Magic",
-    badgeColor: "bg-green-500",
+    badge: "AI",
     href: "/tools/background-remover",
-    stats: "1M+ backgrounds removed",
+  },
+  {
+    id: "pdf-converter",
+    title: "PDF Converter",
+    description: "Convert PDFs to any format",
+    icon: FileText,
+    gradient: "from-red-500 to-pink-500",
+    badge: "Fast",
+    href: "/tools/pdf-converter",
   },
   {
     id: "loan-calculator",
-    title: "Loan EMI Calculator",
-    description: "Calculate loan EMI, interest, and view detailed amortization schedules with interactive charts.",
+    title: "Loan Calculator",
+    description: "Calculate EMI & interest",
     icon: Calculator,
     gradient: "from-purple-500 to-violet-500",
-    badge: "Financial",
-    badgeColor: "bg-purple-500",
+    badge: "Finance",
     href: "/tools/loan-calculator",
-    stats: "300K+ loans calculated",
   },
   {
     id: "video-trimmer",
     title: "Video Trimmer",
-    description: "Trim videos with frame-perfect precision. Cut, crop, and edit videos directly in your browser.",
+    description: "Trim videos precisely",
     icon: Video,
     gradient: "from-orange-500 to-red-500",
-    badge: "Pro Quality",
-    badgeColor: "bg-orange-500",
+    badge: "HD",
     href: "/tools/video-trimmer",
-    stats: "100K+ videos trimmed",
   },
   {
     id: "qr-generator",
-    title: "QR Code Generator",
-    description: "Create custom QR codes with logos, colors, and branding. Support for URLs, WiFi, contacts, and more.",
+    title: "QR Generator",
+    description: "Create custom QR codes",
     icon: QrCode,
     gradient: "from-indigo-500 to-blue-500",
-    badge: "Customizable",
-    badgeColor: "bg-indigo-500",
+    badge: "Custom",
     href: "/tools/qr-generator",
-    stats: "800K+ QR codes created",
   },
   {
     id: "gif-maker",
     title: "GIF Maker",
-    description: "Convert videos and images to high-quality animated GIFs with custom speed and optimization settings.",
+    description: "Convert videos to GIFs",
     icon: Zap,
     gradient: "from-pink-500 to-rose-500",
-    badge: "Creative",
-    badgeColor: "bg-pink-500",
+    badge: "Fun",
     href: "/tools/gif-maker",
-    stats: "200K+ GIFs created",
   },
   {
     id: "text-to-pdf",
     title: "Text to PDF",
-    description: "Convert formatted text to professional PDF documents with custom fonts, layouts, and styling.",
+    description: "Convert text to PDF",
     icon: FileImage,
     gradient: "from-teal-500 to-cyan-500",
-    badge: "Professional",
-    badgeColor: "bg-teal-500",
+    badge: "Quick",
     href: "/tools/text-to-pdf",
-    stats: "400K+ PDFs generated",
   },
   {
     id: "video-compressor",
     title: "Video Compressor",
-    description: "Compress videos while maintaining quality. Reduce file sizes by up to 80% with smart optimization.",
+    description: "Compress videos efficiently",
     icon: Compress,
     gradient: "from-yellow-500 to-orange-500",
-    badge: "Efficient",
-    badgeColor: "bg-yellow-500",
+    badge: "Smart",
     href: "/tools/video-compressor",
-    stats: "150K+ videos compressed",
   },
 ]
 
 export function ToolsGrid() {
   return (
-    <section
-      id="tools"
-      className="py-24 px-4 bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900"
-    >
-      <div className="container mx-auto max-w-7xl">
+    <section id="tools" className="py-12 sm:py-16 lg:py-20 px-3 sm:px-4 bg-gray-50 dark:bg-slate-900">
+      <div className="container mx-auto max-w-6xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-20"
+          transition={{ duration: 0.6 }}
+          className="text-center mb-10 sm:mb-12 lg:mb-16"
         >
-          <h2 className="text-5xl md:text-6xl font-black mb-8 bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 dark:from-white dark:via-blue-100 dark:to-purple-100 bg-clip-text text-transparent">
-            Premium Tools Collection
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black mb-4 sm:mb-6 bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 dark:from-white dark:via-blue-100 dark:to-purple-100 bg-clip-text text-transparent">
+            Choose Your Tool
           </h2>
-          <p className="text-2xl text-gray-600 dark:text-gray-300 max-w-4xl mx-auto leading-relaxed">
-            Professional-grade tools that deliver exactly what you need. Every tool is tested, optimized, and guaranteed
-            to work perfectly.
+          <p className="text-sm sm:text-base md:text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+            Professional tools that work instantly. No signup required.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
           {tools.map((tool, index) => {
             const IconComponent = tool.icon
             return (
@@ -162,32 +136,30 @@ export function ToolsGrid() {
                 key={tool.id}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                whileHover={{ y: -8, scale: 1.02 }}
+                transition={{ duration: 0.4, delay: index * 0.05 }}
+                whileHover={{ y: -4, scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 className="group"
               >
                 <Link href={tool.href}>
-                  <Card className="h-full hover:shadow-2xl transition-all duration-500 border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-xl overflow-hidden">
-                    <CardHeader className="pb-4 relative">
-                      <div className="flex items-center justify-between mb-6">
+                  <Card className="h-full hover:shadow-xl transition-all duration-300 border-0 bg-white dark:bg-slate-800 shadow-md overflow-hidden">
+                    <CardContent className="p-4 sm:p-5">
+                      <div className="flex items-start justify-between mb-3">
                         <div
-                          className={`p-4 rounded-2xl bg-gradient-to-r ${tool.gradient} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}
+                          className={`p-2.5 sm:p-3 rounded-xl bg-gradient-to-r ${tool.gradient} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}
                         >
-                          <IconComponent className="w-8 h-8" />
+                          <IconComponent className="w-4 h-4 sm:w-5 sm:h-5" />
                         </div>
-                        <Badge className={`${tool.badgeColor} text-white border-0 px-3 py-1 font-semibold`}>
+                        <Badge className="bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-gray-300 border-0 px-2 py-0.5 text-xs font-medium">
                           {tool.badge}
                         </Badge>
                       </div>
-                      <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-blue-600 transition-colors">
+                      <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white mb-1 group-hover:text-blue-600 transition-colors">
                         {tool.title}
-                      </CardTitle>
-                      <div className="text-sm text-gray-500 dark:text-gray-400 font-medium">{tool.stats}</div>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-gray-600 dark:text-gray-300 text-base leading-relaxed">
+                      </h3>
+                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                         {tool.description}
-                      </CardDescription>
+                      </p>
                     </CardContent>
                   </Card>
                 </Link>

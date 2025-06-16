@@ -11,83 +11,79 @@ export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3 font-black text-2xl group">
-          <motion.div whileHover={{ scale: 1.05 }} transition={{ duration: 0.3 }} className="flex items-center">
-            <img src="/logo.png" alt="Exact Tools Logo" className="h-12 w-auto object-contain" />
+    <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-gray-100 dark:border-slate-800">
+      <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between">
+        <Link href="/" className="flex items-center group">
+          <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
+            <img src="/logo.png" alt="Exact Tools" className="h-8 sm:h-10 w-auto object-contain" />
           </motion.div>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-8">
-          <Link href="/" className="text-sm font-semibold hover:text-blue-600 transition-colors">
+        {/* Desktop Navigation */}
+        <nav className="hidden lg:flex items-center gap-6">
+          <Link
+            href="/"
+            className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors"
+          >
             Home
           </Link>
-          <Link href="/#tools" className="text-sm font-semibold hover:text-blue-600 transition-colors">
+          <Link
+            href="/#tools"
+            className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors"
+          >
             Tools
           </Link>
-          <Link href="/blog" className="text-sm font-semibold hover:text-blue-600 transition-colors">
-            Blog
-          </Link>
-          <Link href="/about" className="text-sm font-semibold hover:text-blue-600 transition-colors">
+          <Link
+            href="/about"
+            className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 transition-colors"
+          >
             About
-          </Link>
-          <Link href="/contact" className="text-sm font-semibold hover:text-blue-600 transition-colors">
-            Contact
           </Link>
         </nav>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <ModeToggle />
-          <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden h-8 w-8 sm:h-9 sm:w-9"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            {isMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
           </Button>
         </div>
       </div>
 
+      {/* Mobile Menu */}
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden border-t bg-background"
+            className="lg:hidden border-t border-gray-100 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl"
           >
-            <nav className="container mx-auto px-4 py-6 flex flex-col gap-4">
+            <nav className="container mx-auto px-3 py-4 space-y-2">
               <Link
                 href="/"
-                className="text-sm font-semibold hover:text-blue-600 transition-colors py-2"
+                className="block px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Home
               </Link>
               <Link
                 href="/#tools"
-                className="text-sm font-semibold hover:text-blue-600 transition-colors py-2"
+                className="block px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Tools
-              </Link>
-              <Link
-                href="/blog"
-                className="text-sm font-semibold hover:text-blue-600 transition-colors py-2"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Blog
+                All Tools
               </Link>
               <Link
                 href="/about"
-                className="text-sm font-semibold hover:text-blue-600 transition-colors py-2"
+                className="block px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
                 About
-              </Link>
-              <Link
-                href="/contact"
-                className="text-sm font-semibold hover:text-blue-600 transition-colors py-2"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Contact
               </Link>
             </nav>
           </motion.div>
