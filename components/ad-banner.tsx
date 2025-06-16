@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useEffect, useRef } from "react"
 
 interface AdBannerProps {
@@ -7,9 +9,10 @@ interface AdBannerProps {
   format?: "auto" | "rectangle" | "vertical" | "horizontal"
   responsive?: boolean
   className?: string
+  style?: React.CSSProperties
 }
 
-export function AdBanner({ slot, format = "auto", responsive = true, className = "" }: AdBannerProps) {
+export function AdBanner({ slot, format = "auto", responsive = true, className = "", style = {} }: AdBannerProps) {
   const adRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -23,12 +26,16 @@ export function AdBanner({ slot, format = "auto", responsive = true, className =
   }, [])
 
   return (
-    <div className={`ad-container ${className}`}>
-      <div className="text-xs text-gray-400 text-center mb-2">Advertisement</div>
+    <div className={`ad-container text-center my-4 ${className}`}>
+      <div className="text-xs text-gray-400 mb-2">Advertisement</div>
       <ins
         ref={adRef}
-        className="adsbygoogle"
-        style={{ display: "block" }}
+        className="adsbygoogle block"
+        style={{
+          display: "block",
+          textAlign: "center",
+          ...style,
+        }}
         data-ad-client="ca-pub-YOUR-PUBLISHER-ID"
         data-ad-slot={slot}
         data-ad-format={format}

@@ -123,23 +123,47 @@ export default function PrivacyPage() {
             <section className="mb-8">
               <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-3">
                 <FileText className="w-6 h-6 text-blue-600" />
-                Third-Party Services
+                Third-Party Services & Advertising
               </h2>
               <p className="text-gray-700 mb-4">We use the following third-party services:</p>
               <ul className="list-disc pl-6 text-gray-700 space-y-2">
                 <li>
-                  <strong>Google Analytics:</strong> For website analytics and performance monitoring
+                  <strong>Google Analytics:</strong> For website analytics and performance monitoring to improve user
+                  experience
                 </li>
                 <li>
-                  <strong>Google AdSense:</strong> For displaying relevant advertisements
+                  <strong>Google AdSense:</strong> For displaying relevant, non-intrusive advertisements that help us
+                  keep our tools free for everyone. AdSense may use cookies to serve ads based on your interests and
+                  previous visits to our site and other sites on the Internet.
                 </li>
                 <li>
-                  <strong>Microsoft Clarity:</strong> For user experience analysis
+                  <strong>Microsoft Clarity:</strong> For user experience analysis and website optimization
                 </li>
               </ul>
+              <div className="bg-blue-50 p-4 rounded-lg mt-4">
+                <h4 className="font-semibold text-gray-900 mb-2">About Our Advertising</h4>
+                <p className="text-gray-700 text-sm">
+                  We display advertisements through Google AdSense to support our free services. These ads are carefully
+                  selected to be relevant and non-intrusive. You can control ad personalization through your Google Ad
+                  Settings or opt out of personalized advertising. We do not sell your personal information to
+                  advertisers.
+                </p>
+              </div>
               <p className="text-gray-700 mt-4">
-                These services have their own privacy policies, which we encourage you to review.
+                These services have their own privacy policies, which we encourage you to review:
               </p>
+              <ul className="list-disc pl-6 text-gray-700 space-y-1 mt-2">
+                <li>
+                  <a href="https://policies.google.com/privacy" className="text-blue-600 hover:underline">
+                    Google Privacy Policy
+                  </a>
+                </li>
+                <li>
+                  <a href="https://support.google.com/adsense/answer/48182" className="text-blue-600 hover:underline">
+                    Google AdSense Privacy
+                  </a>
+                </li>
+              </ul>
             </section>
 
             <section className="mb-8">

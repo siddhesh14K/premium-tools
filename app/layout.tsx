@@ -26,13 +26,12 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   metadataBase: new URL("https://exacttools.com"),
   title: {
-    default: "Exact Tools - 10+ Premium Online Tools That Actually Work | Free Multi-Tool Web App",
-    template: "%s | Exact Tools - Premium Online Tools",
+    default: "Exact Tools - Free Online Tools for Everyone | Image, PDF, Video & More",
+    template: "%s | Exact Tools - Free Online Utilities",
   },
   description:
-    "Professional online tools with guaranteed results. Image compressor, PDF editor, video trimmer, background remover, loan calculator & 5+ more tools. Fast, accurate, completely free.",
+    "Professional free online tools for image compression, PDF editing, video processing, background removal, calculations & more. No registration required. Privacy-focused, fast & reliable.",
   keywords: [
-    "online tools",
     "free online tools",
     "image compressor",
     "PDF editor",
@@ -40,20 +39,19 @@ export const metadata: Metadata = {
     "background remover",
     "loan calculator",
     "QR code generator",
-    "text to PDF",
-    "video compressor",
-    "GIF maker",
-    "PDF converter",
-    "exact tools",
-    "premium tools",
+    "text to PDF converter",
+    "online utilities",
     "web tools",
-    "utility tools",
     "productivity tools",
-    "professional tools",
-    "image tools",
-    "video tools",
+    "file converter",
+    "image editor",
     "document tools",
-    "calculator tools",
+    "exact tools",
+    "free software",
+    "online converter",
+    "web utilities",
+    "digital tools",
+    "file processing",
   ].join(", "),
   authors: [{ name: "Exact Tools Team", url: "https://exacttools.com" }],
   creator: "Exact Tools",
@@ -79,15 +77,15 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://exacttools.com",
     siteName: "Exact Tools",
-    title: "Exact Tools - 10+ Premium Online Tools That Actually Work",
+    title: "Exact Tools - Free Online Tools for Everyone",
     description:
-      "Professional online tools with guaranteed results. Image compressor, PDF editor, video tools & more. Fast, accurate, completely free.",
+      "Professional free online tools for image compression, PDF editing, video processing & more. No registration required. Privacy-focused & reliable.",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Exact Tools - Premium Online Tools Dashboard",
+        alt: "Exact Tools - Free Online Tools Dashboard",
         type: "image/png",
       },
     ],
@@ -96,17 +94,12 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@exacttools",
     creator: "@exacttools",
-    title: "Exact Tools - Premium Online Tools That Actually Work",
-    description: "Professional online tools with guaranteed results. Fast, accurate, completely free.",
+    title: "Exact Tools - Free Online Tools for Everyone",
+    description: "Professional free online tools. No registration required. Privacy-focused & reliable.",
     images: ["/twitter-image.png"],
   },
   verification: {
-    google: "your-google-site-verification-code",
-    yandex: "your-yandex-verification-code",
-    yahoo: "your-yahoo-verification-code",
-    other: {
-      "msvalidate.01": "your-bing-verification-code",
-    },
+    google: "google-site-verification-code-here",
   },
   alternates: {
     canonical: "https://exacttools.com",
@@ -133,6 +126,13 @@ export default function RootLayout({
         <meta name="theme-color" content="#3b82f6" />
         <meta name="color-scheme" content="light dark" />
 
+        {/* AdSense Script */}
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR-PUBLISHER-ID"
+          crossOrigin="anonymous"
+        />
+
         {/* Preconnect to external domains */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -155,6 +155,8 @@ export default function RootLayout({
         <meta name="distribution" content="global" />
         <meta name="revisit-after" content="1 days" />
         <meta name="language" content="English" />
+        <meta name="content-language" content="en" />
+        <meta name="audience" content="all" />
 
         <StructuredData />
       </head>
