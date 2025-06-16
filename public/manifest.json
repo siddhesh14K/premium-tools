@@ -1,0 +1,27 @@
+{
+  "name": "Exact Tools - Premium Online Tools",
+  "short_name": "Exact Tools",
+  "description": "Professional online tools with guaranteed results. Image compressor, PDF editor, video tools & more.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["productivity", "utilities", "tools"],
+  "lang": "en-US",
+  "dir": "ltr"
+}
