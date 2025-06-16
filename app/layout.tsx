@@ -99,7 +99,7 @@ export const metadata: Metadata = {
     images: ["/twitter-image.png"],
   },
   verification: {
-    google: "google-site-verification-code-here",
+    google: "aJV1XubkXnC5S3nWnJbbe7NJhdxCcB6VTYu9nsXqls4",
   },
   alternates: {
     canonical: "https://freetoolsfree.in",
@@ -117,6 +117,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${poppins.variable}`}>
       <head>
+        {/* Google Search Console Verification */}
+        <meta name="google-site-verification" content="aJV1XubkXnC5S3nWnJbbe7NJhdxCcB6VTYu9nsXqls4" />
+
         {/* Google Analytics - Exactly as provided by Google */}
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-M1MRK2LLM7"></script>
         <script
