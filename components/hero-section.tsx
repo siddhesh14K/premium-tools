@@ -1,55 +1,107 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { ArrowDown, Zap, Shield, Smartphone } from "lucide-react"
+import { ArrowRight, Zap } from "lucide-react"
 import { motion } from "framer-motion"
+import Link from "next/link"
 
 export function HeroSection() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-      <div className="container mx-auto px-3 sm:px-4 py-12 sm:py-16 lg:py-20">
+    <section className="relative min-h-[80vh] flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
+
+      <div className="container mx-auto px-4 py-12 sm:py-20 text-center relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="text-center max-w-4xl mx-auto"
+          className="max-w-4xl mx-auto"
         >
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black mb-4 sm:mb-6 leading-tight">
-            <span className="bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 dark:from-white dark:via-blue-200 dark:to-purple-200 bg-clip-text text-transparent">
-              Professional Tools
+          {/* Logo Display */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="mb-8 flex justify-center"
+          >
+            <img
+              src="/logo-new.png"
+              alt="Exact Free Tools"
+              className="h-16 sm:h-20 md:h-24 w-auto object-contain filter dark:brightness-110"
+            />
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight"
+          >
+            Professional Tools
+            <span className="block bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Completely Free
             </span>
-            <br />
-            <span className="text-blue-600 dark:text-blue-400">Made Simple</span>
-          </h1>
+          </motion.h1>
 
-          <p className="text-base sm:text-lg md:text-xl mb-8 sm:mb-10 text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed">
-            Fast, reliable, and completely free online tools. Get professional results in seconds.
-          </p>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+            className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed"
+          >
+            Access powerful tools for PDF editing, image compression, video processing, and more. No registration
+            required, completely free forever.
+          </motion.p>
 
-          <div className="flex flex-wrap justify-center gap-3 sm:gap-4 mb-8 sm:mb-10">
-            <div className="flex items-center gap-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-full px-3 sm:px-4 py-2 border border-gray-200 dark:border-slate-700">
-              <Zap className="w-4 h-4 text-yellow-500" />
-              <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">Lightning Fast</span>
-            </div>
-            <div className="flex items-center gap-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-full px-3 sm:px-4 py-2 border border-gray-200 dark:border-slate-700">
-              <Shield className="w-4 h-4 text-green-500" />
-              <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">100% Secure</span>
-            </div>
-            <div className="flex items-center gap-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-full px-3 sm:px-4 py-2 border border-gray-200 dark:border-slate-700">
-              <Smartphone className="w-4 h-4 text-blue-500" />
-              <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">Mobile Perfect</span>
-            </div>
-          </div>
-
-          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+            className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+          >
+            <Link href="/#tools">
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                Explore Tools
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
             <Button
+              variant="outline"
               size="lg"
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-4 rounded-full shadow-lg border-0 h-auto"
-              onClick={() => document.getElementById("tools")?.scrollIntoView({ behavior: "smooth" })}
+              className="px-8 py-3 text-lg font-semibold border-2 hover:bg-gray-50 dark:hover:bg-slate-800 transition-all duration-300"
             >
-              Explore Tools
-              <ArrowDown className="ml-2 w-4 h-4" />
+              <Zap className="mr-2 w-5 h-5" />
+              Quick Start
             </Button>
+          </motion.div>
+
+          {/* Stats */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 1 }}
+            className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-2xl mx-auto"
+          >
+            <div className="text-center">
+              <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400">10+</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Tools Available</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl sm:text-3xl font-bold text-purple-600 dark:text-purple-400">100%</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Free Forever</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl sm:text-3xl font-bold text-green-600 dark:text-green-400">0</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Registration</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl sm:text-3xl font-bold text-orange-600 dark:text-orange-400">∞</div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">Usage Limit</div>
+            </div>
           </motion.div>
         </motion.div>
       </div>

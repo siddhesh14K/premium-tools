@@ -14,8 +14,12 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-gray-100 dark:border-slate-800">
       <div className="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center group">
-          <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
-            <img src="/logo.png" alt="Exact Tools" className="h-8 sm:h-10 w-auto object-contain" />
+          <motion.div whileHover={{ scale: 1.02 }} transition={{ duration: 0.2 }} className="flex items-center">
+            <img
+              src="/logo-new.png"
+              alt="Exact Free Tools"
+              className="h-10 sm:h-12 w-auto object-contain filter dark:brightness-110"
+            />
           </motion.div>
         </Link>
 
