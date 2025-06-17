@@ -1,5 +1,3 @@
-"use client"
-
 import { VideoCompressor } from "../video-compressor"
 import type { Metadata } from "next"
 import { HeroSection } from "@/components/hero-section"
@@ -38,10 +36,6 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://exacttools.com",
   },
-}
-
-export default function Page() {
-  return <VideoCompressor />
 }
 
 
