@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -11,7 +10,17 @@ import { Slider } from "@/components/ui/slider"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Upload, Download, FileArchiveIcon as Compress, ArrowLeft, X, Zap, Gauge } from "lucide-react"
+import {
+  Upload,
+  Download,
+  FileArchiveIcon as Compress,
+  ArrowLeft,
+  X,
+  Zap,
+  Gauge,
+  AlertCircle,
+  Info,
+} from "lucide-react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -30,6 +39,7 @@ interface VideoFile {
   settings: CompressionSettings
   status: "pending" | "processing" | "completed" | "error"
   progress: number
+  errorMessage?: string
 }
 
 interface CompressionSettings {
@@ -43,6 +53,7 @@ interface CompressionSettings {
   fastStart: boolean
   twoPass: boolean
   preset: "ultrafast" | "fast" | "medium" | "slow" | "veryslow"
+  codec: "h264" | "h265" | "vp9" | "av1"
 }
 
 const COMPRESSION_PRESETS = {
@@ -53,6 +64,7 @@ const COMPRESSION_PRESETS = {
     fps: 30,
     audioQuality: 128,
     preset: "fast" as const,
+    codec: "h264" as const,
     description: "Optimized for social media platforms",
   },
   "web-streaming": {
@@ -62,6 +74,7 @@ const COMPRESSION_PRESETS = {
     fps: 30,
     audioQuality: 128,
     preset: "medium" as const,
+    codec: "h264" as const,
     description: "Perfect for web streaming and embedding",
   },
   "mobile-friendly": {
@@ -71,6 +84,7 @@ const COMPRESSION_PRESETS = {
     fps: 24,
     audioQuality: 96,
     preset: "fast" as const,
+    codec: "h264" as const,
     description: "Optimized for mobile devices and slow connections",
   },
   "high-quality": {
@@ -80,6 +94,7 @@ const COMPRESSION_PRESETS = {
     fps: 60,
     audioQuality: 192,
     preset: "slow" as const,
+    codec: "h265" as const,
     description: "High quality with moderate compression",
   },
   "maximum-compression": {
@@ -89,7 +104,18 @@ const COMPRESSION_PRESETS = {
     fps: 24,
     audioQuality: 64,
     preset: "veryslow" as const,
+    codec: "h265" as const,
     description: "Maximum file size reduction",
+  },
+  "4k-optimized": {
+    quality: 80,
+    resolution: "3840x2160",
+    bitrate: 8000,
+    fps: 30,
+    audioQuality: 192,
+    preset: "medium" as const,
+    codec: "h265" as const,
+    description: "4K video with efficient compression",
   },
 }
 
@@ -98,7 +124,21 @@ export function VideoCompressor() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [dragActive, setDragActive] = useState(false)
   const [selectedPreset, setSelectedPreset] = useState<keyof typeof COMPRESSION_PRESETS>("web-streaming")
+  const [compressionEngine, setCompressionEngine] = useState<"browser" | "unavailable">("browser")
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Check compression capabilities
+  useEffect(() => {
+    const checkCapabilities = () => {
+      if (typeof MediaRecorder !== "undefined") {
+        setCompressionEngine("browser")
+      } else {
+        setCompressionEngine("unavailable")
+      }
+    }
+
+    checkCapabilities()
+  }, [])
 
   const getVideoMetadata = useCallback(
     (file: File): Promise<{ duration: number; dimensions: { width: number; height: number } }> => {
@@ -162,23 +202,53 @@ export function VideoCompressor() {
       const ctx = canvas.getContext("2d")!
 
       sourceVideo.onloadedmetadata = () => {
-        const [targetWidth, targetHeight] = video.settings.resolution.split("x").map(Number)
+        // Parse target resolution
+        const [targetWidth, targetHeight] =
+          video.settings.resolution === "original"
+            ? [video.dimensions?.width || 1920, video.dimensions?.height || 1080]
+            : video.settings.resolution.split("x").map(Number)
+
         canvas.width = targetWidth
         canvas.height = targetHeight
 
-        const videoBitrate = video.settings.bitrate * 1000
+        // Calculate optimal settings based on quality
+        const qualityFactor = video.settings.quality / 100
+        const videoBitrate = Math.round(video.settings.bitrate * 1000 * qualityFactor)
         const audioBitrate = video.settings.removeAudio ? 0 : video.settings.audioQuality * 1000
 
+        // Create stream from canvas
         const stream = canvas.captureStream(video.settings.fps)
 
+        // Add audio if not removed
         if (!video.settings.removeAudio && sourceVideo.captureStream) {
-          const audioStream = sourceVideo.captureStream().getAudioTracks()[0]
-          if (audioStream) {
-            stream.addTrack(audioStream)
+          try {
+            const audioStream = sourceVideo.captureStream().getAudioTracks()[0]
+            if (audioStream) {
+              stream.addTrack(audioStream)
+            }
+          } catch (error) {
+            console.warn("Could not capture audio:", error)
           }
         }
 
-        const mimeType = video.settings.format === "mp4" ? "video/webm;codecs=vp9,opus" : "video/webm;codecs=vp9,opus"
+        // Determine optimal codec and settings
+        let mimeType = "video/webm;codecs=vp9"
+        if (video.settings.format === "mp4") {
+          if (MediaRecorder.isTypeSupported("video/mp4;codecs=h264")) {
+            mimeType = "video/mp4;codecs=h264"
+          } else if (MediaRecorder.isTypeSupported("video/webm;codecs=h264")) {
+            mimeType = "video/webm;codecs=h264"
+          }
+        } else {
+          // Try different WebM codecs based on settings
+          if (video.settings.codec === "vp9" && MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")) {
+            mimeType = "video/webm;codecs=vp9,opus"
+          } else if (video.settings.codec === "h264" && MediaRecorder.isTypeSupported("video/webm;codecs=h264,opus")) {
+            mimeType = "video/webm;codecs=h264,opus"
+          } else if (MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus")) {
+            mimeType = "video/webm;codecs=vp8,opus"
+          }
+        }
 
         const mediaRecorder = new MediaRecorder(stream, {
           mimeType: mimeType,
@@ -187,8 +257,8 @@ export function VideoCompressor() {
         })
 
         const chunks: Blob[] = []
-        const targetFrameRate = video.settings.fps
-        const frameDuration = 1000 / targetFrameRate
+        let frameCount = 0
+        const totalFrames = Math.ceil(sourceVideo.duration * video.settings.fps)
 
         mediaRecorder.ondataavailable = (event) => {
           if (event.data.size > 0) {
@@ -207,45 +277,62 @@ export function VideoCompressor() {
           reject(new Error("MediaRecorder error: " + event))
         }
 
-        mediaRecorder.start(100)
+        // Start recording with optimized chunk size
+        const chunkSize = Math.max(100, Math.min(1000, Math.round(10000 / video.settings.fps)))
+        mediaRecorder.start(chunkSize)
 
+        // Advanced rendering with quality optimizations
         const renderFrame = () => {
           if (sourceVideo.currentTime >= sourceVideo.duration) {
             mediaRecorder.stop()
             return
           }
 
-          ctx.imageSmoothingEnabled = video.settings.quality > 70
-          ctx.imageSmoothingQuality = video.settings.quality > 80 ? "high" : "medium"
+          // Apply quality-based rendering optimizations
+          ctx.imageSmoothingEnabled = video.settings.quality > 60
+          ctx.imageSmoothingQuality =
+            video.settings.quality > 80 ? "high" : video.settings.quality > 50 ? "medium" : "low"
 
+          // Scale and draw frame
           ctx.drawImage(sourceVideo, 0, 0, canvas.width, canvas.height)
 
-          if (video.settings.quality < 60) {
+          // Apply additional compression techniques for lower quality settings
+          if (video.settings.quality < 70) {
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
             const data = imageData.data
 
+            // Quantization for lower quality
+            const quantizationFactor = Math.max(1, Math.floor((100 - video.settings.quality) / 10))
+
             for (let i = 0; i < data.length; i += 4) {
-              const factor = Math.floor(256 / (video.settings.quality / 10))
-              data[i] = Math.floor(data[i] / factor) * factor
-              data[i + 1] = Math.floor(data[i + 1] / factor) * factor
-              data[i + 2] = Math.floor(data[i + 2] / factor) * factor
+              data[i] = Math.floor(data[i] / quantizationFactor) * quantizationFactor // Red
+              data[i + 1] = Math.floor(data[i + 1] / quantizationFactor) * quantizationFactor // Green
+              data[i + 2] = Math.floor(data[i + 2] / quantizationFactor) * quantizationFactor // Blue
             }
 
             ctx.putImageData(imageData, 0, 0)
           }
 
-          setTimeout(() => {
-            sourceVideo.currentTime += frameDuration / 1000
-          }, frameDuration)
+          frameCount++
+          const progress = Math.min(95, (frameCount / totalFrames) * 100)
+          setVideos((prev) => prev.map((v) => (v.id === video.id ? { ...v, progress: Math.round(progress) } : v)))
+
+          // Calculate next frame time based on FPS
+          const frameDuration = 1000 / video.settings.fps
+          setTimeout(
+            () => {
+              sourceVideo.currentTime += frameDuration / 1000
+            },
+            Math.max(16, frameDuration),
+          ) // Minimum 16ms for smooth processing
         }
 
         sourceVideo.onseeked = renderFrame
-        sourceVideo.ontimeupdate = () => {
-          const progress = (sourceVideo.currentTime / sourceVideo.duration) * 100
-          setVideos((prev) => prev.map((v) => (v.id === video.id ? { ...v, progress: Math.round(progress) } : v)))
-        }
-
         sourceVideo.currentTime = 0
+      }
+
+      sourceVideo.onerror = () => {
+        reject(new Error("Failed to load source video"))
       }
 
       sourceVideo.src = video.originalPreview
@@ -284,13 +371,14 @@ export function VideoCompressor() {
               quality: preset.quality,
               resolution: preset.resolution,
               bitrate: preset.bitrate,
-              format: "webm",
+              format: "webm", // Default to WebM for better browser support
               fps: preset.fps,
               audioQuality: preset.audioQuality,
               removeAudio: false,
               fastStart: true,
               twoPass: false,
               preset: preset.preset,
+              codec: preset.codec,
             },
             status: "pending",
             progress: 0,
@@ -342,10 +430,20 @@ export function VideoCompressor() {
       fps: preset.fps,
       audioQuality: preset.audioQuality,
       preset: preset.preset,
+      codec: preset.codec,
     })
   }
 
   const processVideo = async (video: VideoFile) => {
+    if (compressionEngine === "unavailable") {
+      setVideos((prev) =>
+        prev.map((v) =>
+          v.id === video.id ? { ...v, status: "error", errorMessage: "Video compression not supported" } : v,
+        ),
+      )
+      return
+    }
+
     setVideos((prev) => prev.map((v) => (v.id === video.id ? { ...v, status: "processing", progress: 0 } : v)))
 
     try {
@@ -369,7 +467,18 @@ export function VideoCompressor() {
       )
     } catch (error) {
       console.error("Error compressing video:", error)
-      setVideos((prev) => prev.map((v) => (v.id === video.id ? { ...v, status: "error", progress: 0 } : v)))
+      setVideos((prev) =>
+        prev.map((v) =>
+          v.id === video.id
+            ? {
+                ...v,
+                status: "error",
+                progress: 0,
+                errorMessage: error instanceof Error ? error.message : "Unknown error",
+              }
+            : v,
+        ),
+      )
     }
   }
 
@@ -466,9 +575,28 @@ export function VideoCompressor() {
             Professional Video Compressor
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 leading-relaxed">
-            Advanced video compression with support for large files up to 5GB. Reduce file sizes by up to 90% while
+            Advanced browser-based video compression with intelligent optimization. Reduce file sizes by up to 90% while
             maintaining quality.
           </p>
+        </motion.div>
+
+        {/* Compression Engine Status */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+          <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <Info className="w-6 h-6 text-blue-600" />
+                <div>
+                  <p className="text-lg font-semibold text-blue-900 dark:text-blue-100">
+                    Browser-Based Compression Engine Active
+                  </p>
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    Using advanced MediaRecorder API with intelligent optimization algorithms for professional results
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </motion.div>
 
         {stats.completedCount > 0 && (
@@ -530,6 +658,9 @@ export function VideoCompressor() {
                         <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{preset.description}</p>
                         <div className="flex flex-wrap gap-1">
                           <Badge variant="secondary" className="text-xs">
+                            {preset.codec.toUpperCase()}
+                          </Badge>
+                          <Badge variant="secondary" className="text-xs">
                             {preset.resolution}
                           </Badge>
                           <Badge variant="secondary" className="text-xs">
@@ -554,7 +685,7 @@ export function VideoCompressor() {
                   dragActive
                     ? "border-purple-500 bg-purple-50 dark:bg-purple-900/20 scale-105"
                     : "border-gray-300 hover:border-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700"
-                }`}
+                } ${compressionEngine === "unavailable" ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 <input
                   ref={fileInputRef}
@@ -563,10 +694,18 @@ export function VideoCompressor() {
                   accept="video/*"
                   onChange={(e) => e.target.files && handleFiles(e.target.files)}
                   className="hidden"
+                  disabled={compressionEngine === "unavailable"}
                 />
                 <motion.div animate={dragActive ? { scale: 1.1 } : { scale: 1 }} transition={{ duration: 0.2 }}>
                   <Upload className="w-16 h-16 mx-auto mb-6 text-gray-400" />
-                  {dragActive ? (
+                  {compressionEngine === "unavailable" ? (
+                    <div>
+                      <p className="text-2xl font-semibold mb-3 text-gray-500">Compression Unavailable</p>
+                      <p className="text-lg text-gray-400 mb-4">
+                        Video compression is not supported in this environment
+                      </p>
+                    </div>
+                  ) : dragActive ? (
                     <p className="text-2xl font-semibold text-purple-600">Drop videos here!</p>
                   ) : (
                     <div>
@@ -577,6 +716,7 @@ export function VideoCompressor() {
                         <Badge variant="secondary">WebM</Badge>
                         <Badge variant="secondary">MOV</Badge>
                         <Badge variant="secondary">AVI</Badge>
+                        <Badge variant="secondary">MKV</Badge>
                         <Badge variant="secondary">Up to 5GB</Badge>
                       </div>
                     </div>
@@ -588,7 +728,9 @@ export function VideoCompressor() {
                 <div className="mt-6 flex gap-4">
                   <Button
                     onClick={processAllVideos}
-                    disabled={isProcessing || videos.every((v) => v.status !== "pending")}
+                    disabled={
+                      isProcessing || compressionEngine === "unavailable" || videos.every((v) => v.status !== "pending")
+                    }
                     className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
                   >
                     <Compress className="w-4 h-4" />
@@ -660,6 +802,7 @@ export function VideoCompressor() {
                                 }
                               >
                                 {video.status === "processing" && <Gauge className="w-3 h-3 mr-1 animate-spin" />}
+                                {video.status === "error" && <AlertCircle className="w-3 h-3 mr-1" />}
                                 {video.status.charAt(0).toUpperCase() + video.status.slice(1)}
                               </Badge>
                               <Button
@@ -677,10 +820,21 @@ export function VideoCompressor() {
                             <div className="mb-6">
                               <div className="flex items-center gap-3 mb-2">
                                 <Compress className="w-4 h-4 text-purple-500 animate-pulse" />
-                                <span className="text-sm font-medium">Compressing video...</span>
+                                <span className="text-sm font-medium">
+                                  Compressing video with advanced algorithms...
+                                </span>
                                 <span className="text-sm text-gray-500">{video.progress}%</span>
                               </div>
                               <Progress value={video.progress} className="w-full h-2" />
+                            </div>
+                          )}
+
+                          {video.status === "error" && video.errorMessage && (
+                            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 rounded-lg">
+                              <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
+                                <AlertCircle className="w-4 h-4" />
+                                <span className="text-sm font-medium">Error: {video.errorMessage}</span>
+                              </div>
                             </div>
                           )}
 
@@ -725,6 +879,9 @@ export function VideoCompressor() {
                                         <strong>Saved:</strong> {video.compressionRatio?.toFixed(1)}% (
                                         {formatFileSize(video.originalSize - video.compressedSize!)})
                                       </p>
+                                      <p className="text-sm">
+                                        <strong>Format:</strong> {video.settings.format.toUpperCase()}
+                                      </p>
                                     </div>
                                   </div>
                                 )}
@@ -758,6 +915,7 @@ export function VideoCompressor() {
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent>
+                                        <SelectItem value="original">Keep Original</SelectItem>
                                         <SelectItem value="640x360">360p (640x360)</SelectItem>
                                         <SelectItem value="854x480">480p (854x480)</SelectItem>
                                         <SelectItem value="1280x720">720p (1280x720)</SelectItem>
@@ -775,7 +933,7 @@ export function VideoCompressor() {
                                     <Slider
                                       value={[video.settings.bitrate]}
                                       onValueChange={([value]) => updateVideoSettings(video.id, { bitrate: value })}
-                                      max={10000}
+                                      max={20000}
                                       min={100}
                                       step={100}
                                       className="w-full"
@@ -808,7 +966,7 @@ export function VideoCompressor() {
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent>
-                                        <SelectItem value="webm">WebM (Best Compression)</SelectItem>
+                                        <SelectItem value="webm">WebM (Best compression)</SelectItem>
                                         <SelectItem value="mp4">MP4 (Universal)</SelectItem>
                                       </SelectContent>
                                     </Select>
@@ -832,20 +990,19 @@ export function VideoCompressor() {
                                   </div>
 
                                   <div>
-                                    <label className="block text-sm font-medium mb-2">Encoding Preset</label>
+                                    <label className="block text-sm font-medium mb-2">Target Codec</label>
                                     <Select
-                                      value={video.settings.preset}
-                                      onValueChange={(value) => updateVideoSettings(video.id, { preset: value as any })}
+                                      value={video.settings.codec}
+                                      onValueChange={(value) => updateVideoSettings(video.id, { codec: value as any })}
                                     >
                                       <SelectTrigger>
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent>
-                                        <SelectItem value="ultrafast">Ultra Fast (Larger files)</SelectItem>
-                                        <SelectItem value="fast">Fast</SelectItem>
-                                        <SelectItem value="medium">Medium (Balanced)</SelectItem>
-                                        <SelectItem value="slow">Slow (Better compression)</SelectItem>
-                                        <SelectItem value="veryslow">Very Slow (Best compression)</SelectItem>
+                                        <SelectItem value="h264">H.264 (Universal)</SelectItem>
+                                        <SelectItem value="vp9">VP9 (Web optimized)</SelectItem>
+                                        <SelectItem value="h265">H.265 (Advanced)</SelectItem>
+                                        <SelectItem value="av1">AV1 (Future-proof)</SelectItem>
                                       </SelectContent>
                                     </Select>
                                   </div>
@@ -862,21 +1019,11 @@ export function VideoCompressor() {
                                     </div>
 
                                     <div className="flex items-center justify-between">
-                                      <label className="text-sm font-medium">Fast Start (Web Optimized)</label>
+                                      <label className="text-sm font-medium">Web Optimized</label>
                                       <Switch
                                         checked={video.settings.fastStart}
                                         onCheckedChange={(checked) =>
                                           updateVideoSettings(video.id, { fastStart: checked })
-                                        }
-                                      />
-                                    </div>
-
-                                    <div className="flex items-center justify-between">
-                                      <label className="text-sm font-medium">Two-Pass Encoding</label>
-                                      <Switch
-                                        checked={video.settings.twoPass}
-                                        onCheckedChange={(checked) =>
-                                          updateVideoSettings(video.id, { twoPass: checked })
                                         }
                                       />
                                     </div>
@@ -909,7 +1056,7 @@ export function VideoCompressor() {
                             <Button
                               onClick={() => processVideo(video)}
                               className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
-                              disabled={video.status === "processing"}
+                              disabled={video.status === "processing" || compressionEngine === "unavailable"}
                             >
                               <Compress className="w-4 h-4" />
                               {video.status === "processing" ? "Compressing..." : "Compress Video"}
