@@ -1,4 +1,3 @@
-import { VideoCompressor } from "../video-compressor"
 import type { Metadata } from "next"
 import { HeroSection } from "@/components/hero-section"
 import { ToolsGrid } from "@/components/tools-grid"
@@ -7,16 +6,17 @@ import { SEOSection } from "@/components/seo-section"
 import { FAQSection } from "@/components/faq-section"
 
 export const metadata: Metadata = {
-  title: "Exact Tools - 10+ Premium Online Tools That Actually Work | Free Multi-Tool Web App",
+  title: "Exact Tools - Premium Online Tools for File Processing & Utilities",
   description:
-    "Professional online tools with guaranteed results. Image compressor, PDF editor, video trimmer, background remover, loan calculator & 5+ more tools. Fast, accurate, completely free.",
+    "Professional online tools with guaranteed results. Image compressor, PDF editor, video processing, and more. Fast, secure, and completely free to use.",
   keywords:
-    "online tools, free online tools, image compressor, PDF editor, video trimmer, background remover, loan calculator, QR code generator, text to PDF, video compressor, GIF maker, PDF converter, exact tools, premium tools, web tools, utility tools, productivity tools",
+    "online tools, free online tools, image compressor, PDF editor, video trimmer, background remover, loan calculator, QR code generator, text to PDF, video compressor, GIF maker, PDF converter, exact tools, premium tools",
   openGraph: {
-    title: "Exact Tools - Premium Online Tools That Actually Work",
-    description: "Professional online tools with guaranteed results. Fast, accurate, and completely free.",
+    title: "Exact Tools - Professional Online Utilities",
+    description: "Fast, secure, and powerful online tools for all your file processing needs.",
     type: "website",
     url: "https://exacttools.com",
+    siteName: "Exact Tools",
     images: [
       {
         url: "/og-image.png",
@@ -28,25 +28,38 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Exact Tools - Premium Online Tools That Actually Work",
-    description: "Professional online tools with guaranteed results. Fast, accurate, and completely free.",
+    title: "Exact Tools - Professional Online Utilities",
+    description: "Fast, secure, and powerful online tools for all your file processing needs.",
     images: ["/twitter-image.png"],
+    creator: "@exacttools",
   },
-  robots: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
   alternates: {
     canonical: "https://exacttools.com",
   },
+  verification: {
+    google: "your-google-verification-code",
+  },
 }
-
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen">
+    <main className="min-h-screen bg-background">
       <HeroSection />
       <ToolsGrid />
       <FeaturesSection />
       <SEOSection />
       <FAQSection />
-    </div>
+    </main>
   )
 }

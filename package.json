@@ -9,13 +9,16 @@
     "lint": "next lint",
     "type-check": "tsc --noEmit"
   },
-    "dependencies": {
+  "dependencies": {
     "@emotion/is-prop-valid": "latest",
     "@radix-ui/react-dropdown-menu": "^2.0.6",
     "@radix-ui/react-label": "^2.0.2",
     "@radix-ui/react-progress": "^1.0.3",
     "@radix-ui/react-select": "^2.0.0",
+    "@radix-ui/react-separator": "^1.1.7",
     "@radix-ui/react-slider": "^1.1.2",
+    "@radix-ui/react-switch": "^1.2.5",
+    "@radix-ui/react-tabs": "^1.1.12",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "latest",
@@ -42,6 +45,7 @@
     "eslint-config-next": "14.0.0",
     "postcss": "^8.5",
     "tailwindcss": "^3.3.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "worker-loader": "^3.0.8"
   }
 }

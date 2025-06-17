@@ -1,5 +1,6 @@
 "use client"
 
+import dynamic from 'next/dynamic'
 import type React from "react"
 import { useState, useRef, useCallback, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -24,6 +25,76 @@ import {
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 
+// Declare HTMLVideoElement types
+declare global {
+  interface HTMLVideoElement {
+    captureStream(): MediaStream;
+  }
+}
+
+// Types for compression presets
+type CompressionPreset = {
+  quality: number;
+  resolution: string;
+  bitrate: number;
+  fps: number;
+  audioQuality: number;
+  preset: "ultrafast" | "fast" | "medium" | "slow" | "veryslow";
+  codec: "h264" | "h265" | "vp9" | "av1";
+  description: string;
+  maxFileSize?: number;
+};
+
+type CompressionPresets = {
+  [key: string]: CompressionPreset;
+};
+
+// Compression presets
+const COMPRESSION_PRESETS: CompressionPresets = {
+  "social-media": {
+    quality: 75,
+    resolution: "1280x720",
+    bitrate: 1500,
+    fps: 30,
+    audioQuality: 128,
+    preset: "fast",
+    codec: "h264",
+    description: "Optimized for social media platforms",
+    maxFileSize: 100 * 1024 * 1024, // 100MB
+  },
+  "web-streaming": {
+    quality: 70,
+    resolution: "1920x1080",
+    bitrate: 2500,
+    fps: 30,
+    audioQuality: 128,
+    preset: "medium",
+    codec: "h264",
+    description: "Perfect for web streaming and embedding",
+  },
+  "mobile-friendly": {
+    quality: 65,
+    resolution: "854x480",
+    bitrate: 800,
+    fps: 24,
+    audioQuality: 96,
+    preset: "fast",
+    codec: "h264",
+    description: "Optimized for mobile devices and slow connections",
+  },
+  "high-quality": {
+    quality: 85,
+    resolution: "1920x1080",
+    bitrate: 4000,
+    fps: 60,
+    audioQuality: 192,
+    preset: "slow",
+    codec: "h265",
+    description: "High quality with moderate compression",
+  }
+};
+
+// Types
 interface VideoFile {
   id: string
   original: File
@@ -56,89 +127,145 @@ interface CompressionSettings {
   codec: "h264" | "h265" | "vp9" | "av1"
 }
 
-const COMPRESSION_PRESETS = {
-  "social-media": {
-    quality: 75,
-    resolution: "1280x720",
-    bitrate: 1500,
-    fps: 30,
-    audioQuality: 128,
-    preset: "fast" as const,
-    codec: "h264" as const,
-    description: "Optimized for social media platforms",
-  },
-  "web-streaming": {
-    quality: 70,
-    resolution: "1920x1080",
-    bitrate: 2500,
-    fps: 30,
-    audioQuality: 128,
-    preset: "medium" as const,
-    codec: "h264" as const,
-    description: "Perfect for web streaming and embedding",
-  },
-  "mobile-friendly": {
-    quality: 65,
-    resolution: "854x480",
-    bitrate: 800,
-    fps: 24,
-    audioQuality: 96,
-    preset: "fast" as const,
-    codec: "h264" as const,
-    description: "Optimized for mobile devices and slow connections",
-  },
-  "high-quality": {
-    quality: 85,
-    resolution: "1920x1080",
-    bitrate: 4000,
-    fps: 60,
-    audioQuality: 192,
-    preset: "slow" as const,
-    codec: "h265" as const,
-    description: "High quality with moderate compression",
-  },
-  "maximum-compression": {
-    quality: 50,
-    resolution: "640x360",
-    bitrate: 400,
-    fps: 24,
-    audioQuality: 64,
-    preset: "veryslow" as const,
-    codec: "h265" as const,
-    description: "Maximum file size reduction",
-  },
-  "4k-optimized": {
-    quality: 80,
-    resolution: "3840x2160",
-    bitrate: 8000,
-    fps: 30,
-    audioQuality: 192,
-    preset: "medium" as const,
-    codec: "h265" as const,
-    description: "4K video with efficient compression",
-  },
-}
+// Constants
+const MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024; // 2GB
+const SUPPORTED_FORMATS = ['mp4', 'webm', 'mov', 'avi'];
+const DEFAULT_SETTINGS: CompressionSettings = {
+  quality: 75,
+  resolution: "1280x720",
+  bitrate: 1500,
+  format: "mp4",
+  fps: 30,
+  audioQuality: 128,
+  removeAudio: false,
+  fastStart: true,
+  twoPass: false,
+  preset: "fast",
+  codec: "h264"
+};
 
 export function VideoCompressor() {
-  const [videos, setVideos] = useState<VideoFile[]>([])
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [dragActive, setDragActive] = useState(false)
-  const [selectedPreset, setSelectedPreset] = useState<keyof typeof COMPRESSION_PRESETS>("web-streaming")
-  const [compressionEngine, setCompressionEngine] = useState<"browser" | "unavailable">("browser")
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [files, setFiles] = useState<VideoFile[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [dragActive, setDragActive] = useState(false);
+  const [selectedPreset, setSelectedPreset] = useState<keyof typeof COMPRESSION_PRESETS>("web-streaming");
+  const [compressionEngine, setCompressionEngine] = useState<"wasm" | "webcodecs" | "unavailable">("wasm");
+  const workerRef = useRef<Worker | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Check compression capabilities
+  // Initialize web worker
   useEffect(() => {
-    const checkCapabilities = () => {
-      if (typeof MediaRecorder !== "undefined") {
-        setCompressionEngine("browser")
-      } else {
-        setCompressionEngine("unavailable")
-      }
-    }
+    if (typeof window === 'undefined') return;
 
-    checkCapabilities()
-  }, [])
+    const initWorker = async () => {
+      try {
+        workerRef.current = new Worker(
+          new URL('@/lib/workers/video-worker.ts', import.meta.url)
+        );
+        workerRef.current.onmessage = handleWorkerMessage;
+      } catch (err) {
+        console.error('Failed to initialize web worker:', err);
+      }
+    };
+
+    initWorker();
+
+    return () => {
+      workerRef.current?.terminate();
+    };
+  }, []);
+
+  // Handle worker messages
+  const handleWorkerMessage = useCallback((event: MessageEvent) => {
+    const { type, payload } = event.data;
+    
+    switch (type) {
+      case 'progress':
+        setFiles(prev => 
+          prev.map(file => 
+            file.id === payload.id 
+              ? { ...file, progress: payload.progress } 
+              : file
+          )
+        );
+        break;
+      case 'complete':
+        setFiles(prev =>
+          prev.map(file =>
+            file.id === payload.id
+              ? {
+                  ...file,
+                  status: 'completed',
+                  compressedBlob: payload.blob,
+                  compressedSize: payload.size,
+                  compressionRatio: (payload.size / file.originalSize) * 100,
+                  compressedPreview: URL.createObjectURL(payload.blob)
+                }
+              : file
+          )
+        );
+        break;
+      case 'error':
+        setFiles(prev =>
+          prev.map(file =>
+            file.id === payload.id
+              ? { ...file, status: 'error', errorMessage: payload.error }
+              : file
+          )
+        );
+        break;
+    }
+  }, []);
+
+  // File handlers
+  const handleFileSelect = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(event.target.files || []);
+    
+    // Validate files
+    const validFiles = selectedFiles.filter(file => {
+      if (file.size > MAX_FILE_SIZE) {
+        setError(`File ${file.name} is too large. Maximum size is 2GB.`);
+        return false;
+      }
+      
+      const extension = file.name.split('.').pop()?.toLowerCase();
+      if (!extension || !SUPPORTED_FORMATS.includes(extension)) {
+        setError(`File ${file.name} is not supported. Supported formats: ${SUPPORTED_FORMATS.join(', ')}`);
+        return false;
+      }
+      return true;
+    });
+
+    if (validFiles.length === 0) return;
+
+    // Process valid files
+    const newFiles = validFiles.map(file => ({
+      id: Math.random().toString(36).substr(2, 9),
+      original: file,
+      originalSize: file.size,
+      originalPreview: URL.createObjectURL(file),
+      status: 'pending' as const,
+      progress: 0,
+      settings: { ...DEFAULT_SETTINGS }
+    }));
+
+    setFiles(prev => [...prev, ...newFiles]);
+    setError(null);
+  }, []);
+
+  // Switch handlers with proper types
+  const handleSwitchChange = (id: string, field: keyof Pick<CompressionSettings, 'removeAudio' | 'fastStart' | 'twoPass'>) => {
+    return (checked: boolean) => {
+      setFiles(prev =>
+        prev.map(file =>
+          file.id === id
+            ? { ...file, settings: { ...file.settings, [field]: checked } }
+            : file
+        )
+      );
+    };
+  };
 
   const getVideoMetadata = useCallback(
     (file: File): Promise<{ duration: number; dimensions: { width: number; height: number } }> => {
@@ -315,7 +442,7 @@ export function VideoCompressor() {
 
           frameCount++
           const progress = Math.min(95, (frameCount / totalFrames) * 100)
-          setVideos((prev) => prev.map((v) => (v.id === video.id ? { ...v, progress: Math.round(progress) } : v)))
+          setFiles((prev) => prev.map((v) => (v.id === video.id ? { ...v, progress: Math.round(progress) } : v)))
 
           // Calculate next frame time based on FPS
           const frameDuration = 1000 / video.settings.fps
@@ -351,15 +478,27 @@ export function VideoCompressor() {
         return
       }
 
-      const newVideos: VideoFile[] = []
-
+      // Validate files
       for (const file of validFiles) {
-        try {
+        if (file.size > MAX_FILE_SIZE) {
+          setError(`File ${file.name} is too large. Maximum size is 2GB.`)
+          return
+        }
+
+        const extension = file.name.split(".").pop()?.toLowerCase()
+        if (!extension || !SUPPORTED_FORMATS.includes(extension)) {
+          setError(`File ${file.name} is not supported. Supported formats: ${SUPPORTED_FORMATS.join(", ")}`)
+          return
+        }
+      }
+
+      const newFiles: VideoFile[] = await Promise.all(
+        validFiles.map(async (file) => {
           const metadata = await getVideoMetadata(file)
           const thumbnail = await generateThumbnail(file)
           const preset = COMPRESSION_PRESETS[selectedPreset]
 
-          const video: VideoFile = {
+          return {
             id: Math.random().toString(36).substr(2, 9),
             original: file,
             originalSize: file.size,
@@ -383,13 +522,11 @@ export function VideoCompressor() {
             status: "pending",
             progress: 0,
           }
-          newVideos.push(video)
-        } catch (error) {
-          console.error("Error processing file:", file.name, error)
-        }
-      }
+        }),
+      )
 
-      setVideos((prev) => [...prev, ...newVideos])
+      setFiles((prev) => [...prev, ...newFiles])
+      setError(null)
     },
     [getVideoMetadata, generateThumbnail, selectedPreset],
   )
@@ -416,7 +553,7 @@ export function VideoCompressor() {
   }, [])
 
   const updateVideoSettings = (videoId: string, settings: Partial<CompressionSettings>) => {
-    setVideos((prev) =>
+    setFiles((prev) =>
       prev.map((video) => (video.id === videoId ? { ...video, settings: { ...video.settings, ...settings } } : video)),
     )
   }
@@ -436,7 +573,7 @@ export function VideoCompressor() {
 
   const processVideo = async (video: VideoFile) => {
     if (compressionEngine === "unavailable") {
-      setVideos((prev) =>
+      setFiles((prev) =>
         prev.map((v) =>
           v.id === video.id ? { ...v, status: "error", errorMessage: "Video compression not supported" } : v,
         ),
@@ -444,13 +581,13 @@ export function VideoCompressor() {
       return
     }
 
-    setVideos((prev) => prev.map((v) => (v.id === video.id ? { ...v, status: "processing", progress: 0 } : v)))
+    setFiles((prev) => prev.map((v) => (v.id === video.id ? { ...v, status: "processing", progress: 0 } : v)))
 
     try {
       const compressedBlob = await compressVideo(video)
       const compressionRatio = ((video.originalSize - compressedBlob.size) / video.originalSize) * 100
 
-      setVideos((prev) =>
+      setFiles((prev) =>
         prev.map((v) =>
           v.id === video.id
             ? {
@@ -467,7 +604,7 @@ export function VideoCompressor() {
       )
     } catch (error) {
       console.error("Error compressing video:", error)
-      setVideos((prev) =>
+      setFiles((prev) =>
         prev.map((v) =>
           v.id === video.id
             ? {
@@ -484,7 +621,7 @@ export function VideoCompressor() {
 
   const processAllVideos = async () => {
     setIsProcessing(true)
-    const pendingVideos = videos.filter((v) => v.status === "pending")
+    const pendingVideos = files.filter((v) => v.status === "pending")
 
     for (const video of pendingVideos) {
       await processVideo(video)
@@ -507,11 +644,11 @@ export function VideoCompressor() {
   }
 
   const downloadAll = () => {
-    videos.filter((v) => v.compressedBlob).forEach(downloadVideo)
+    files.filter((v) => v.compressedBlob).forEach(downloadVideo)
   }
 
   const removeVideo = (id: string) => {
-    setVideos((prev) => {
+    setFiles((prev) => {
       const video = prev.find((v) => v.id === id)
       if (video) {
         URL.revokeObjectURL(video.originalPreview)
@@ -546,7 +683,7 @@ export function VideoCompressor() {
   }
 
   const getCompressionStats = () => {
-    const completed = videos.filter((v) => v.status === "completed")
+    const completed = files.filter((v) => v.status === "completed")
     const totalOriginalSize = completed.reduce((sum, v) => sum + v.originalSize, 0)
     const totalCompressedSize = completed.reduce((sum, v) => sum + (v.compressedSize || 0), 0)
     const averageCompression =
@@ -724,12 +861,12 @@ export function VideoCompressor() {
                 </motion.div>
               </div>
 
-              {videos.length > 0 && (
+              {files.length > 0 && (
                 <div className="mt-6 flex gap-4">
                   <Button
                     onClick={processAllVideos}
                     disabled={
-                      isProcessing || compressionEngine === "unavailable" || videos.every((v) => v.status !== "pending")
+                      isProcessing || compressionEngine === "unavailable" || files.every((v) => v.status !== "pending")
                     }
                     className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
                   >
@@ -737,7 +874,7 @@ export function VideoCompressor() {
                     {isProcessing ? "Processing..." : "Compress All"}
                   </Button>
 
-                  {videos.some((v) => v.compressedBlob) && (
+                  {files.some((v) => v.compressedBlob) && (
                     <Button
                       onClick={downloadAll}
                       className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
@@ -753,15 +890,15 @@ export function VideoCompressor() {
         </motion.div>
 
         <AnimatePresence>
-          {videos.length > 0 && (
+          {files.length > 0 && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
               <Card className="shadow-2xl border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
                 <CardHeader>
-                  <CardTitle className="text-2xl">Video Compression Queue ({videos.length})</CardTitle>
+                  <CardTitle className="text-2xl">Video Compression Queue ({files.length})</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-8">
-                    {videos.map((video, index) => (
+                    {files.map((video, index) => (
                       <motion.div
                         key={video.id}
                         initial={{ opacity: 0, x: -20 }}
