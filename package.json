@@ -10,7 +10,6 @@
     "type-check": "tsc --noEmit"
   },
     "dependencies": {
-    "framer-motion": "latest",
     "lucide-react": "^0.454.0",
     "@emotion/is-prop-valid": "latest",
     "@radix-ui/react-dropdown-menu": "^2.0.6",
